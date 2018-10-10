@@ -34,7 +34,7 @@ func TestInclude(t *testing.T) {
 	})
 }
 
-func TestListen(t *testing.T) {
+func TesRouterGrouptListen(t *testing.T) {
 	Convey("Given a group", t, func() {
 		service := &Service{}
 		router := service.NewRouter(&engines.AMQP{})
