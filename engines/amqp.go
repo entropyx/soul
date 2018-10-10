@@ -67,9 +67,7 @@ func (a *AMQP) Consume(routingKey string, handlers []context.Handler) error {
 	h := func(d *rabbitgo.Delivery) {
 		c := &Context{d}
 		context := context.NewContext(c)
-		for _, handler := range handlers {
-			handler(context)
-		}
+		context.RunHandlers(handlers)
 	}
 	return consumer.ConsumeRPC(h)
 }

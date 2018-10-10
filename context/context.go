@@ -3,6 +3,7 @@ package context
 import (
 	"encoding/json"
 	"errors"
+	"math"
 
 	"github.com/golang/protobuf/proto"
 )
@@ -27,6 +28,7 @@ type Context struct {
 	SpanID  string
 	Request *R
 	Headers M
+	index   uint8
 }
 
 type R struct {
@@ -55,6 +57,10 @@ func (c *Context) Bind(v interface{}) error {
 	}
 }
 
+func (c *Context) Abort() {
+	c.index = math.MaxUint8 - 1
+}
+
 func (c *Context) JSON(v interface{}) {
 	body, _ := json.Marshal(v)
 	c.publish(body, typeJson)
@@ -63,6 +69,16 @@ func (c *Context) JSON(v interface{}) {
 func (c *Context) Proto(pb proto.Message) {
 	body, _ := proto.Marshal(pb)
 	c.publish(body, typeProto)
+}
+
+func (c *Context) RunHandlers(handlers []Handler) {
+	for {
+		if c.index >= uint8(len(handlers)) {
+			break
+		}
+		handlers[c.index](c)
+		c.index++
+	}
 }
 
 func (c *Context) String(text string) {
