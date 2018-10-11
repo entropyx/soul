@@ -23,7 +23,7 @@ type C interface {
 
 type Context struct {
 	C       C
-	M       M
+	m       M
 	TraceID string
 	SpanID  string
 	Request *R
@@ -61,6 +61,10 @@ func (c *Context) Abort() {
 	c.index = math.MaxUint8 - 1
 }
 
+func (c *Context) Get(key string) interface{} {
+	return c.m[key]
+}
+
 func (c *Context) JSON(v interface{}) {
 	body, _ := json.Marshal(v)
 	c.publish(body, typeJson)
@@ -79,6 +83,13 @@ func (c *Context) RunHandlers(handlers []Handler) {
 		handlers[c.index](c)
 		c.index++
 	}
+}
+
+func (c *Context) Set(key string, value interface{}) {
+	if c.m == nil {
+		c.m = M{}
+	}
+	c.m[key] = value
 }
 
 func (c *Context) String(text string) {
