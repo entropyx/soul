@@ -19,12 +19,12 @@ func TestIndex(t *testing.T) {
 			context := &Context{}
 			context.RunHandlers(handlers)
 
-			c.Convey("The index should be 1", func() {
+			c.Convey("The index should be 2", func() {
 				c.So(index, c.ShouldEqual, 2)
 			})
 
 			c.Convey("The context index should be the abort index", func() {
-				c.So(context.index, c.ShouldEqual, math.MaxUint8)
+				c.So(context.index, c.ShouldEqual, math.MaxInt8)
 			})
 		})
 	})

@@ -22,13 +22,14 @@ type C interface {
 }
 
 type Context struct {
-	C       C
-	m       M
-	TraceID string
-	SpanID  string
-	Request *R
-	Headers M
-	index   uint8
+	C        C
+	m        M
+	TraceID  string
+	SpanID   string
+	Request  *R
+	Headers  M
+	handlers []Handler
+	index    int8
 }
 
 type R struct {
@@ -58,7 +59,7 @@ func (c *Context) Bind(v interface{}) error {
 }
 
 func (c *Context) Abort() {
-	c.index = math.MaxUint8 - 1
+	c.index = math.MaxInt8 - 1
 }
 
 func (c *Context) Get(key string) interface{} {
@@ -70,19 +71,26 @@ func (c *Context) JSON(v interface{}) {
 	c.publish(body, typeJson)
 }
 
+func (c *Context) Next() {
+	c.index++
+	for s := int8(len(c.handlers)); c.index < s; c.index++ {
+		c.handlers[c.index](c)
+	}
+}
+
 func (c *Context) Proto(pb proto.Message) {
 	body, _ := proto.Marshal(pb)
 	c.publish(body, typeProto)
 }
 
+func (c *Context) reset() {
+	c.index = -1
+}
+
 func (c *Context) RunHandlers(handlers []Handler) {
-	for {
-		if c.index >= uint8(len(handlers)) {
-			break
-		}
-		handlers[c.index](c)
-		c.index++
-	}
+	c.reset()
+	c.handlers = handlers
+	c.Next()
 }
 
 func (c *Context) Set(key string, value interface{}) {
