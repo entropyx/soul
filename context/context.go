@@ -41,7 +41,7 @@ type R struct {
 type M map[string]interface{}
 
 func NewContext(c C) *Context {
-	context := &Context{C: c}
+	context := &Context{C: c, Headers: M{}}
 	context.setRequest()
 	return context
 }
@@ -117,4 +117,19 @@ func (c *Context) publish(body []byte, t string) {
 func (c *Context) setRequest() {
 	r := c.C.Request()
 	c.Request = r
+}
+
+// ForeachKey conforms to the TextMapReader interface.
+func (m M) ForeachKey(handler func(key, val string) error) error {
+	for k, v := range m {
+		if err := handler(k, v.(string)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Set conforms to the TextMapWriter interface.
+func (m M) Set(key, value string) {
+	m[key] = value
 }
