@@ -1,7 +1,7 @@
 package engines
 
 import (
-	"github.com/dsmontoya/soul/context"
+	"github.com/soul-go/soul/context"
 )
 
 type Mock struct {

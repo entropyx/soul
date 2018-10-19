@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dsmontoya/soul/context"
+	"github.com/soul-go/soul/context"
 	"github.com/spf13/cobra"
 
-	"github.com/dsmontoya/soul/engines"
+	"github.com/soul-go/soul/engines"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

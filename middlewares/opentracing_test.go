@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	"github.com/dsmontoya/soul/context"
+	"github.com/soul-go/soul/context"
 	opentracing "github.com/opentracing/opentracing-go"
 
 	"testing"

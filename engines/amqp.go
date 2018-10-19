@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/dsmontoya/soul/context"
+	"github.com/soul-go/soul/context"
 	"github.com/entropyx/rabbitgo"
 	"github.com/streadway/amqp"
 )
