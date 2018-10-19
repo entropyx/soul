@@ -1,6 +1,7 @@
 package soul
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -10,6 +11,16 @@ import (
 	"github.com/dsmontoya/soul/engines"
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+type cronJobMock struct {
+	wg     *sync.WaitGroup
+	called bool
+}
+
+func (c *cronJobMock) Run() {
+	c.called = true
+	c.wg.Done()
+}
 
 func TestListen(t *testing.T) {
 	Convey("Given a service with routes", t, func() {
@@ -33,6 +44,25 @@ func TestListen(t *testing.T) {
 
 			Convey("The number of handlers should be 2", func() {
 				So(mock.Handlers, ShouldHaveLength, 2)
+			})
+		})
+	})
+}
+
+func TestCronJob(t *testing.T) {
+	Convey("Given a service with a cronjob", t, func() {
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		mock := &cronJobMock{wg: wg}
+		service := New("test")
+		service.CronJob("test", "@every 2ms", mock.Run)
+
+		Convey("When the cronjob starts", func() {
+			service.cronjob(&cobra.Command{}, []string{"test"})
+			wg.Wait()
+
+			Convey("The cronjob should be called", func() {
+				So(mock.called, ShouldBeTrue)
 			})
 		})
 	})

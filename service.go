@@ -19,7 +19,7 @@ type Service struct {
 	Name     string
 	rootCmd  *cobra.Command
 	routers  []*Router
-	cronJobs []*cronJob
+	cronJobs map[string]*cronJob
 	commands []*cobra.Command
 	flags    flags
 }
@@ -36,7 +36,7 @@ func New(name string) *Service {
 		Run:   func(cmd *cobra.Command, args []string) {},
 	}
 
-	return &Service{Name: name, rootCmd: rootCmd}
+	return &Service{Name: name, rootCmd: rootCmd, cronJobs: map[string]*cronJob{}}
 }
 
 func (s *Service) Command(command *cobra.Command) {
@@ -44,7 +44,7 @@ func (s *Service) Command(command *cobra.Command) {
 }
 
 func (s *Service) CronJob(name, spec string, handler func()) {
-	s.cronJobs = append(s.cronJobs, &cronJob{name, spec, handler})
+	s.cronJobs[name] = &cronJob{name, spec, handler}
 }
 
 func (s *Service) NewRouter(engine Engine) *Router {
@@ -65,6 +65,16 @@ func (s *Service) Run() {
 	<-forever
 }
 
+func (s *Service) addCommandCronJob() {
+	cronJobCmd := &cobra.Command{
+		Use:   "cronjob job",
+		Short: cmdShortListener,
+		Args:  cobra.ExactArgs(1),
+		Run:   s.cronjob,
+	}
+	s.rootCmd.AddCommand(cronJobCmd)
+}
+
 func (s *Service) addCommandListener() {
 	listenCmd := &cobra.Command{
 		Use:   "listen routing_key",
@@ -83,6 +93,16 @@ func (s *Service) addCommandListener() {
 
 func (s *Service) addCommands() {
 	s.rootCmd.AddCommand(s.commands...)
+}
+
+func (s *Service) cronjob(cmd *cobra.Command, args []string) {
+	job := args[0]
+	if cronjob, ok := s.cronJobs[job]; ok {
+		cronjob.Start()
+		return
+	}
+	log.Fatal("Invalid job")
+
 }
 
 func (s *Service) listenAll() {

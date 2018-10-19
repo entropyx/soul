@@ -7,12 +7,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type cronJob struct {
-	name    string
-	spec    string
-	handler func()
-}
-
 type Router struct {
 	RouteGroup
 	engine Engine
