@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	typeJson  = "application/json"
-	typePlain = "text/plain"
-	typeProto = "application/protobuf"
+	TypeJson  = "application/json"
+	TypePlain = "text/plain"
+	TypeProto = "application/protobuf"
 )
 
 type Handler func(*Context)
@@ -49,17 +49,26 @@ func NewContext(c C) *Context {
 func (c *Context) Bind(v interface{}) error {
 	r := c.Request
 	switch r.Type {
-	case typeJson:
+	case TypeJson:
 		return json.Unmarshal(r.Body, v)
-	case typeProto:
+	case TypeProto:
 		return proto.Unmarshal(r.Body, v.(proto.Message))
 	default:
 		return errors.New("")
 	}
 }
 
-func (c *Context) Abort() {
+func (c *Context) Abort(v interface{}) {
 	c.index = math.MaxInt8 - 1
+	r := c.Request
+	switch r.Type {
+	case TypeJson:
+		c.JSON(v)
+	case TypeProto:
+		c.Proto(v.(proto.Message))
+	case TypePlain:
+		c.String(v.(string))
+	}
 }
 
 func (c *Context) Get(key string) interface{} {
@@ -68,7 +77,7 @@ func (c *Context) Get(key string) interface{} {
 
 func (c *Context) JSON(v interface{}) {
 	body, _ := json.Marshal(v)
-	c.publish(body, typeJson)
+	c.publish(body, TypeJson)
 }
 
 func (c *Context) Next() {
@@ -80,7 +89,7 @@ func (c *Context) Next() {
 
 func (c *Context) Proto(pb proto.Message) {
 	body, _ := proto.Marshal(pb)
-	c.publish(body, typeProto)
+	c.publish(body, TypeProto)
 }
 
 func (c *Context) reset() {
@@ -102,7 +111,7 @@ func (c *Context) Set(key string, value interface{}) {
 
 func (c *Context) String(text string) {
 	body := []byte(text)
-	c.publish(body, typePlain)
+	c.publish(body, TypePlain)
 }
 
 func (c *Context) publish(body []byte, t string) {

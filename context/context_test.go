@@ -13,7 +13,7 @@ func TestIndex(t *testing.T) {
 		f := func(c *Context) {
 			index++
 		}
-		handlers := []Handler{f, f, func(c *Context) { c.Abort() }, f}
+		handlers := []Handler{f, f, func(c *Context) { c.Abort("") }, f}
 
 		c.Convey("When the handlers run", func() {
 			context := &Context{Request: &R{}}
