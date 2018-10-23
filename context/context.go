@@ -71,6 +71,11 @@ func (c *Context) Abort(v interface{}) {
 	}
 }
 
+func (c *Context) AbortWithError(v interface{}, err error) {
+	c.Set("err", err)
+	c.Abort(v)
+}
+
 func (c *Context) Get(key string) interface{} {
 	return c.m[key]
 }

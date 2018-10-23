@@ -6,11 +6,11 @@ import (
 	"time"
 
 	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 	jaeger "github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	"github.com/uber/jaeger-client-go/rpcmetrics"
 	"github.com/uber/jaeger-lib/metrics"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
@@ -77,10 +77,14 @@ func ConfigureOpenTracing(tracer opentracing.Tracer) {
 func Opentracing(c *context.Context) {
 	t := opentracing.GlobalTracer()
 	spanCtx, _ := t.Extract(opentracing.HTTPHeaders, c.Request.Headers)
-	span := t.StartSpan("new-request", ext.RPCServerOption(spanCtx))
+	span := t.StartSpan("new-request", opentracing.ChildOf(spanCtx))
 	defer span.Finish()
+	span.SetTag(ext.SamplingPriority, ext.PriorityAutoKeep)
 	c.Set("span", span)
 	c.Next()
+	if err, ok := c.Get("err").(error); ok {
+		span.SetTag(ext.Error, err)
+	}
 	// Inject the client span context into the headers
 	t.Inject(span.Context(), opentracing.HTTPHeaders, c.Headers)
 }
