@@ -2,10 +2,12 @@ package context
 
 import (
 	"encoding/json"
-	"errors"
 	"math"
 
+	"github.com/entropyx/errors"
+
 	"github.com/golang/protobuf/proto"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -23,44 +25,56 @@ type C interface {
 
 type Context struct {
 	C        C
-	m        M
+	Err      error
+	Log      *logrus.Entry
 	TraceID  string
 	SpanID   string
 	Request  *R
 	Headers  M
 	handlers []Handler
 	index    int8
+	m        M
 }
 
 type R struct {
-	Body    []byte
-	Headers M
-	Type    string
+	Body       []byte
+	Headers    M
+	RoutingKey string
+	Type       string
 }
 
 type M map[string]interface{}
 
 func NewContext(c C) *Context {
-	context := &Context{C: c, Headers: M{}}
+	context := &Context{C: c, Headers: M{}, Log: logrus.NewEntry(logrus.StandardLogger())}
 	context.setRequest()
 	return context
 }
 
 func (c *Context) Bind(v interface{}) error {
+	var err error
 	r := c.Request
+	body := r.Body
 	switch r.Type {
 	case TypeJson:
-		return json.Unmarshal(r.Body, v)
+		err = json.Unmarshal(body, v)
 	case TypeProto:
-		return proto.Unmarshal(r.Body, v.(proto.Message))
+		err = proto.Unmarshal(body, v.(proto.Message))
 	default:
-		return errors.New("")
+		err = errors.New("unknown type")
 	}
+	if err != nil {
+		err = errors.Err(errors.BadRequest, errors.MessageBadRequest, err)
+	}
+	return err
 }
 
 func (c *Context) Abort(v interface{}) {
 	c.index = math.MaxInt8 - 1
 	r := c.Request
+	if v == nil {
+		return
+	}
 	switch r.Type {
 	case TypeJson:
 		c.JSON(v)
@@ -72,7 +86,7 @@ func (c *Context) Abort(v interface{}) {
 }
 
 func (c *Context) AbortWithError(v interface{}, err error) {
-	c.Set("err", err)
+	c.Err = err
 	c.Abort(v)
 }
 
