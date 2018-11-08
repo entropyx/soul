@@ -1,7 +1,7 @@
 package engines
 
 import (
-	"github.com/soul-go/soul/context"
+	"github.com/entropyx/soul/context"
 )
 
 type Mock struct {

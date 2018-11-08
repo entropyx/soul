@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/soul-go/soul/context"
+	"github.com/entropyx/soul/context"
 	"github.com/spf13/cobra"
 )
 

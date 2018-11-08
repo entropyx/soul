@@ -4,8 +4,8 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/soul-go/soul/context"
-	"github.com/soul-go/soul/env"
+	"github.com/entropyx/soul/context"
+	"github.com/entropyx/soul/env"
 )
 
 type LoggerOptions struct {

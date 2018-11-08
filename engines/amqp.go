@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/entropyx/rabbitgo"
-	"github.com/soul-go/soul/context"
+	"github.com/entropyx/soul/context"
 	"github.com/streadway/amqp"
 )
 

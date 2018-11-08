@@ -3,8 +3,8 @@ package soul
 import (
 	"testing"
 
-	"github.com/soul-go/soul/context"
-	"github.com/soul-go/soul/engines"
+	"github.com/entropyx/soul/context"
+	"github.com/entropyx/soul/engines"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

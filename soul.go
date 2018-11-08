@@ -3,8 +3,8 @@ package soul
 import (
 	"time"
 
+	"github.com/entropyx/soul/context"
 	log "github.com/sirupsen/logrus"
-	"github.com/soul-go/soul/context"
 )
 
 type Router struct {

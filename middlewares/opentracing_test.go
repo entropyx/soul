@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/soul-go/soul/context"
+	"github.com/entropyx/soul/context"
 
 	"testing"
 

@@ -15,8 +15,8 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
-	"github.com/soul-go/soul/context"
-	"github.com/soul-go/soul/env"
+	"github.com/entropyx/soul/context"
+	"github.com/entropyx/soul/env"
 	jaegerlog "github.com/uber/jaeger-client-go/log"
 )
 
