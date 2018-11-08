@@ -5,19 +5,20 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/soul-go/soul/context"
 	"github.com/entropyx/rabbitgo"
+	"github.com/soul-go/soul/context"
 	"github.com/streadway/amqp"
 )
 
 type AMQP struct {
-	ExchangeName  string
-	ExchangeTopic string
-	Queue         string
-	RoutingKey    string
-	PrefetchCount uint8
-	AutoAck       bool
-	conn          *rabbitgo.Connection
+	ExchangeName    string
+	ExchangeType    string
+	ExchangeDurable bool
+	Queue           string
+	RoutingKey      string
+	PrefetchCount   uint8
+	AutoAck         bool
+	conn            *rabbitgo.Connection
 }
 
 type Context struct {
@@ -44,9 +45,9 @@ func (a *AMQP) Connect() error {
 
 func (a *AMQP) Consume(routingKey string, handlers []context.Handler) error {
 	exchange := &rabbitgo.Exchange{
-		Name:    "entropy",
-		Type:    "topic",
-		Durable: true,
+		Name:    a.ExchangeName,
+		Type:    a.ExchangeType,
+		Durable: a.ExchangeDurable,
 	}
 
 	queue := &rabbitgo.Queue{
@@ -57,8 +58,8 @@ func (a *AMQP) Consume(routingKey string, handlers []context.Handler) error {
 	}
 	consumerConfig := &rabbitgo.ConsumerConfig{
 		Tag:           routingKey,
-		PrefetchCount: 20,
-		AutoAck:       true,
+		PrefetchCount: int(a.PrefetchCount),
+		AutoAck:       a.AutoAck,
 	}
 	consumer, err := a.conn.NewConsumer(exchange, queue, binding, consumerConfig)
 	if err != nil {
@@ -92,8 +93,9 @@ func (c *Context) Publish(r *context.R) {
 
 func (c *Context) Request() *context.R {
 	return &context.R{
-		Type:    c.Type,
-		Headers: context.M(c.Headers),
-		Body:    c.Body,
+		Type:       c.Type,
+		Headers:    context.M(c.Headers),
+		RoutingKey: c.RoutingKey,
+		Body:       c.Body,
 	}
 }
