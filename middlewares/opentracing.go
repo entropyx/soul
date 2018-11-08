@@ -1,9 +1,10 @@
 package middlewares
 
 import (
-	"fmt"
 	"os"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	opentracing "github.com/opentracing/opentracing-go"
 	jaeger "github.com/uber/jaeger-client-go"
@@ -20,12 +21,19 @@ import (
 )
 
 const (
-	jaegerHeaderName  = "uber-trace-id"
-	datadogHeaderName = "x-datadog-trace-id"
+	jaegerHeaderName        = "uber-trace-id"
+	datadogTraceHeaderName  = "trace-id"
+	datadogParentHeaderName = "parent-id"
 )
 
 func ConfigureDatadog(service string) (opentracing.Tracer, error) {
+	cfg := &tracer.PropagatorConfig{
+		TraceHeader:  "trace-id",
+		ParentHeader: "parent-id",
+	}
+	propagator := tracer.NewPropagator(cfg)
 	t := opentracer.New(
+		tracer.WithPropagator(propagator),
 		tracer.WithAgentAddr(os.Getenv("DD_AGENT_HOST")),
 		tracer.WithServiceName(service),
 		tracer.WithGlobalTag("env", env.Mode),
@@ -52,7 +60,6 @@ func ConfigureJaegerSimple(hostPort, service string) (opentracing.Tracer, error)
 	jMetricsFactory := metrics.NullFactory
 
 	// Initialize tracer with a logger and a metrics factory
-	fmt.Println("service", service)
 	tracer, _, err := cfg.New(
 		service,
 		jaegercfg.Reporter(jaeger.NewRemoteReporter(
@@ -75,16 +82,23 @@ func ConfigureOpenTracing(tracer opentracing.Tracer) {
 }
 
 func Opentracing(c *context.Context) {
+	headers := context.M{}
+	fields := log.Fields{}
 	t := opentracing.GlobalTracer()
 	spanCtx, _ := t.Extract(opentracing.HTTPHeaders, c.Request.Headers)
 	span := t.StartSpan("new-request", opentracing.ChildOf(spanCtx))
 	defer span.Finish()
-	span.SetTag(ext.SamplingPriority, ext.PriorityAutoKeep)
+	t.Inject(span.Context(), opentracing.HTTPHeaders, headers)
+	for k, v := range headers {
+		c.Headers[k] = v
+		fields[k] = v
+	}
+	// span.SetTag(ext.SamplingPriority, ext.PriorityAutoKeep)
+	c.Log = c.Log.WithFields(fields)
 	c.Set("span", span)
 	c.Next()
-	if err, ok := c.Get("err").(error); ok {
+	if err := c.Err; err != nil {
 		span.SetTag(ext.Error, err)
 	}
 	// Inject the client span context into the headers
-	t.Inject(span.Context(), opentracing.HTTPHeaders, c.Headers)
 }

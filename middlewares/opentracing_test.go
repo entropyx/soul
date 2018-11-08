@@ -1,8 +1,8 @@
 package middlewares
 
 import (
-	"github.com/soul-go/soul/context"
 	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/soul-go/soul/context"
 
 	"testing"
 
@@ -28,7 +28,7 @@ func TestOpentracing(t *testing.T) {
 			})
 
 			Convey("The response header should contain a trace id", func() {
-				So(c.Headers[datadogHeaderName], ShouldNotBeEmpty)
+				So(c.Headers[datadogTraceHeaderName], ShouldNotBeEmpty)
 			})
 		})
 
@@ -44,7 +44,7 @@ func TestOpentracing(t *testing.T) {
 			})
 
 			Convey("The request and response trace id headers should be the same", func() {
-				So(c.Request.Headers[datadogHeaderName], ShouldEqual, c.Headers[datadogHeaderName])
+				So(c.Request.Headers[datadogTraceHeaderName], ShouldEqual, c.Headers[datadogTraceHeaderName])
 			})
 		})
 	})
