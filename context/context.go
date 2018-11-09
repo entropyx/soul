@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"math"
 
-	"github.com/entropyx/errors"
+	"errors"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
