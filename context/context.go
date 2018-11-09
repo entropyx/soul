@@ -63,9 +63,6 @@ func (c *Context) Bind(v interface{}) error {
 	default:
 		err = errors.New("unknown type")
 	}
-	if err != nil {
-		err = errors.Err(errors.BadRequest, errors.MessageBadRequest, err)
-	}
 	return err
 }
 
