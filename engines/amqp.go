@@ -14,8 +14,6 @@ type AMQP struct {
 	ExchangeName    string
 	ExchangeType    string
 	ExchangeDurable bool
-	Queue           string
-	RoutingKey      string
 	PrefetchCount   uint8
 	AutoAck         bool
 	conn            *rabbitgo.Connection
