@@ -81,24 +81,26 @@ func ConfigureOpenTracing(tracer opentracing.Tracer) {
 	opentracing.SetGlobalTracer(tracer)
 }
 
-func Opentracing(c *context.Context) {
-	headers := context.M{}
-	fields := log.Fields{}
-	t := opentracing.GlobalTracer()
-	spanCtx, _ := t.Extract(opentracing.HTTPHeaders, c.Request.Headers)
-	span := t.StartSpan("new-request", opentracing.ChildOf(spanCtx))
-	defer span.Finish()
-	t.Inject(span.Context(), opentracing.HTTPHeaders, headers)
-	for k, v := range headers {
-		c.Headers[k] = v
-		fields[k] = v
+func Opentracing() context.Handler {
+	return func(c *context.Context) {
+		headers := context.M{}
+		fields := log.Fields{}
+		t := opentracing.GlobalTracer()
+		spanCtx, _ := t.Extract(opentracing.HTTPHeaders, c.Request.Headers)
+		span := t.StartSpan("new-request", opentracing.ChildOf(spanCtx))
+		defer span.Finish()
+		t.Inject(span.Context(), opentracing.HTTPHeaders, headers)
+		for k, v := range headers {
+			c.Headers[k] = v
+			fields[k] = v
+		}
+		// span.SetTag(ext.SamplingPriority, ext.PriorityAutoKeep)
+		c.Log = c.Log.WithFields(fields)
+		c.Set("span", span)
+		c.Next()
+		if err := c.Err; err != nil {
+			span.SetTag(ext.Error, err)
+		}
+		// Inject the client span context into the headers
 	}
-	// span.SetTag(ext.SamplingPriority, ext.PriorityAutoKeep)
-	c.Log = c.Log.WithFields(fields)
-	c.Set("span", span)
-	c.Next()
-	if err := c.Err; err != nil {
-		span.SetTag(ext.Error, err)
-	}
-	// Inject the client span context into the headers
 }

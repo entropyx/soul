@@ -1,8 +1,8 @@
 package middlewares
 
 import (
-	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/entropyx/soul/context"
+	opentracing "github.com/opentracing/opentracing-go"
 
 	"testing"
 
@@ -20,7 +20,7 @@ func TestOpentracing(t *testing.T) {
 		c := context.NewContext(&context.MockContext{})
 
 		Convey("When the handler is executed without a parent span", func() {
-			Opentracing(c)
+			Opentracing()(c)
 
 			Convey("The span should be set", func() {
 				span := c.Get("span")
@@ -36,7 +36,7 @@ func TestOpentracing(t *testing.T) {
 			span := tr.StartSpan("client")
 			tr.Inject(span.Context(), opentracing.HTTPHeaders, c.Request.Headers)
 			defer span.Finish()
-			Opentracing(c)
+			Opentracing()(c)
 
 			Convey("The span should be set", func() {
 				span := c.Get("span")
