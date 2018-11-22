@@ -55,14 +55,11 @@ func (s *Service) NewRouter(engine Engine) *Router {
 }
 
 func (s *Service) Run() {
-	forever := make(chan bool)
 	s.addCommandListener()
 	s.addCommands()
 	if err := s.rootCmd.Execute(); err != nil {
 		panic(err)
 	}
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
-	<-forever
 }
 
 func (s *Service) addCommandCronJob() {
@@ -111,6 +108,7 @@ func (s *Service) listenAll() {
 
 func (s *Service) listen(cmd *cobra.Command, args []string) {
 	routingKey := args[0]
+	forever := make(chan bool)
 	for _, router := range s.routers {
 		router.connect()
 		if handlers, ok := router.routes[routingKey]; ok {
@@ -118,6 +116,9 @@ func (s *Service) listen(cmd *cobra.Command, args []string) {
 			go router.engine.Consume(routingKey, handlers)
 		}
 	}
+
+	log.Printf("Waiting for messages. To exit press CTRL+C")
+	<-forever
 
 }
 
