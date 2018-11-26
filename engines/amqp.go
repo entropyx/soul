@@ -86,14 +86,14 @@ func (a *AMQP) Run() error {
 
 func (c *Context) Publish(r *context.R) {
 	c.Headers = amqp.Table(r.Headers)
-	c.Data(r.Body, r.Type)
+	c.Data(r.Body, r.ContentType)
 }
 
 func (c *Context) Request() *context.R {
 	return &context.R{
-		Type:       c.ContentType,
-		Headers:    context.M(c.Headers),
-		RoutingKey: c.RoutingKey,
-		Body:       c.Body,
+		ContentType: c.ContentType,
+		Headers:     context.M(c.Headers),
+		RoutingKey:  c.RoutingKey,
+		Body:        c.Body,
 	}
 }
