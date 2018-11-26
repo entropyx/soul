@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	TypeJson  = "application/json"
-	TypePlain = "text/plain"
-	TypeProto = "application/protobuf"
+	TypeJson   = "application/json"
+	TypePlain  = "text/plain"
+	TypeProto  = "application/protobuf"
+	TypeXProto = "application/x-protobuf"
 )
 
 type Handler func(*Context)
@@ -58,7 +59,7 @@ func (c *Context) Bind(v interface{}) error {
 	switch r.Type {
 	case TypeJson:
 		err = json.Unmarshal(body, v)
-	case TypeProto:
+	case TypeProto, TypeXProto:
 		err = proto.Unmarshal(body, v.(proto.Message))
 	default:
 		err = errors.New("unknown type")
