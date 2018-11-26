@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -90,6 +91,7 @@ func Opentracing() context.Handler {
 		span := t.StartSpan("new-request", opentracing.ChildOf(spanCtx))
 		defer span.Finish()
 		t.Inject(span.Context(), opentracing.HTTPHeaders, headers)
+		fmt.Println("headers", headers)
 		for k, v := range headers {
 			c.Headers[k] = v
 			fields[k] = v
