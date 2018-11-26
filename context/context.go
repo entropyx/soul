@@ -2,6 +2,7 @@ package context
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 
 	"errors"
@@ -62,7 +63,7 @@ func (c *Context) Bind(v interface{}) error {
 	case TypeProto, TypeXProto:
 		err = proto.Unmarshal(body, v.(proto.Message))
 	default:
-		err = errors.New("unknown type")
+		err = errors.New(fmt.Sprintf("unknown type: %s", r.Type))
 	}
 	return err
 }
