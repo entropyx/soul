@@ -97,6 +97,8 @@ func Opentracing() context.Handler {
 			fields[k] = v
 		}
 		// span.SetTag(ext.SamplingPriority, ext.PriorityAutoKeep)
+		fmt.Println("fields", fields)
+		fmt.Println("c.Headers", c.Headers)
 		c.Log = c.Log.WithFields(fields)
 		c.Set("span", span)
 		c.Next()
