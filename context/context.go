@@ -39,10 +39,10 @@ type Context struct {
 }
 
 type R struct {
-	Body       []byte
-	Headers    M
-	RoutingKey string
-	Type       string
+	Body        []byte
+	Headers     M
+	RoutingKey  string
+	ContentType string
 }
 
 type M map[string]interface{}
@@ -57,13 +57,13 @@ func (c *Context) Bind(v interface{}) error {
 	var err error
 	r := c.Request
 	body := r.Body
-	switch r.Type {
+	switch r.ContentType {
 	case TypeJson:
 		err = json.Unmarshal(body, v)
 	case TypeProto, TypeXProto:
 		err = proto.Unmarshal(body, v.(proto.Message))
 	default:
-		err = errors.New(fmt.Sprintf("unknown type: %s", r.Type))
+		err = errors.New(fmt.Sprintf("unknown type: %s", r.ContentType))
 	}
 	return err
 }
@@ -74,7 +74,7 @@ func (c *Context) Abort(v interface{}) {
 	if v == nil {
 		return
 	}
-	switch r.Type {
+	switch r.ContentType {
 	case TypeJson:
 		c.JSON(v)
 	case TypeProto:
@@ -134,9 +134,9 @@ func (c *Context) String(text string) {
 
 func (c *Context) publish(body []byte, t string) {
 	r := &R{
-		Body:    body,
-		Headers: c.Headers,
-		Type:    t,
+		Body:        body,
+		Headers:     c.Headers,
+		ContentType: t,
 	}
 	c.C.Publish(r)
 }

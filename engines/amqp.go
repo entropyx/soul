@@ -91,7 +91,7 @@ func (c *Context) Publish(r *context.R) {
 
 func (c *Context) Request() *context.R {
 	return &context.R{
-		Type:       c.Type,
+		Type:       c.ContentType,
 		Headers:    context.M(c.Headers),
 		RoutingKey: c.RoutingKey,
 		Body:       c.Body,
