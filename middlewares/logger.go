@@ -3,9 +3,9 @@ package middlewares
 import (
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/entropyx/soul/context"
 	"github.com/entropyx/soul/env"
+	log "github.com/sirupsen/logrus"
 )
 
 type LoggerOptions struct {
@@ -35,7 +35,7 @@ func Logger(options *LoggerOptions) context.Handler {
 		c.Next()
 		fields := c.Log.WithFields(log.Fields{
 			"routing_key": c.Request.RoutingKey,
-			"duration":    time.Since(t),
+			"duration":    time.Since(t).String(),
 		})
 		if c.Err != nil {
 			fields.Errorf("Request aborted with error: %s", c.Err)
