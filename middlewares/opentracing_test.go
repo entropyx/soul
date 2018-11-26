@@ -16,7 +16,7 @@ func TestOpentracing(t *testing.T) {
 	defer tracer.Stop()
 	ConfigureOpenTracing(tr)
 
-	defer Convey("Given a context", t, func() {
+	Convey("Given a context", t, func() {
 		c := context.NewContext(&context.MockContext{})
 
 		Convey("When the handler is executed without a parent span", func() {
@@ -29,6 +29,10 @@ func TestOpentracing(t *testing.T) {
 
 			Convey("The response header should contain a trace id", func() {
 				So(c.Headers[datadogTraceHeaderName], ShouldNotBeEmpty)
+			})
+
+			Convey("The log data should contain a trace id", func() {
+				So(c.Log.Data[datadogTraceHeaderName], ShouldNotBeEmpty)
 			})
 		})
 
@@ -45,6 +49,10 @@ func TestOpentracing(t *testing.T) {
 
 			Convey("The request and response trace id headers should be the same", func() {
 				So(c.Request.Headers[datadogTraceHeaderName], ShouldEqual, c.Headers[datadogTraceHeaderName])
+			})
+
+			Convey("The log data should contain a trace id", func() {
+				So(c.Log.Data[datadogTraceHeaderName], ShouldNotBeEmpty)
 			})
 		})
 	})
