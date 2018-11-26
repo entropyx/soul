@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/entropyx/soul/context"
@@ -38,7 +37,6 @@ func Logger(options *LoggerOptions) context.Handler {
 			"routing_key": c.Request.RoutingKey,
 			"duration":    time.Since(t).String(),
 		})
-		fmt.Println("fields.Data", fields.Data)
 		if c.Err != nil {
 			fields.Errorf("Request aborted with error: %s", c.Err)
 			return
