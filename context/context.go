@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"time"
 
 	"errors"
 
@@ -27,7 +28,7 @@ type C interface {
 
 type Context struct {
 	C        C
-	Err      error
+	Error    error
 	Log      *logrus.Entry
 	TraceID  string
 	SpanID   string
@@ -35,7 +36,7 @@ type Context struct {
 	Headers  M
 	handlers []Handler
 	index    int8
-	m        M
+	m        mi
 }
 
 type R struct {
@@ -46,6 +47,8 @@ type R struct {
 }
 
 type M map[string]interface{}
+
+type mi map[interface{}]interface{}
 
 func NewContext(c C) *Context {
 	context := &Context{C: c, Headers: M{}, Log: logrus.NewEntry(logrus.StandardLogger())}
@@ -85,11 +88,23 @@ func (c *Context) Abort(v interface{}) {
 }
 
 func (c *Context) AbortWithError(v interface{}, err error) {
-	c.Err = err
+	c.Error = err
 	c.Abort(v)
 }
 
-func (c *Context) Get(key string) interface{} {
+func (c *Context) Deadline() (time.Time, bool) {
+	return time.Now(), false
+}
+
+func (c *Context) Done() <-chan struct{} {
+	return nil
+}
+
+func (c *Context) Err() error {
+	return nil
+}
+
+func (c *Context) Get(key interface{}) interface{} {
 	return c.m[key]
 }
 
@@ -110,6 +125,10 @@ func (c *Context) Proto(pb proto.Message) {
 	c.publish(body, TypeProto)
 }
 
+func (c *Context) Value(key interface{}) interface{} {
+	return c.Get(key)
+}
+
 func (c *Context) reset() {
 	c.index = -1
 }
@@ -122,7 +141,7 @@ func (c *Context) RunHandlers(handlers []Handler) {
 
 func (c *Context) Set(key string, value interface{}) {
 	if c.m == nil {
-		c.m = M{}
+		c.m = mi{}
 	}
 	c.m[key] = value
 }
