@@ -17,7 +17,7 @@ func TestIndex(t *testing.T) {
 
 		c.Convey("When the handlers run", func() {
 			context := &Context{Request: &R{}}
-			context.RunHandlers(handlers)
+			context.RunHandlers(handlers...)
 
 			c.Convey("The index should be 2", func() {
 				c.So(index, c.ShouldEqual, 2)

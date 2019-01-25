@@ -133,7 +133,7 @@ func (c *Context) reset() {
 	c.index = -1
 }
 
-func (c *Context) RunHandlers(handlers []Handler) {
+func (c *Context) RunHandlers(handlers ...Handler) {
 	c.reset()
 	c.handlers = handlers
 	c.Next()

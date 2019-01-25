@@ -114,7 +114,9 @@ func (s *Service) listen(cmd *cobra.Command, args []string) {
 		if handlers, ok := router.routes[routingKey]; ok {
 			log.Info("Starting handler")
 			go router.engine.Consume(routingKey, handlers)
+			continue
 		}
+		log.Error("Handler not found")
 	}
 
 	log.Printf("Waiting for messages. To exit press CTRL+C")

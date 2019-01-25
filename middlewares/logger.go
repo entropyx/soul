@@ -37,8 +37,8 @@ func Logger(options *LoggerOptions) context.Handler {
 			"routing_key": c.Request.RoutingKey,
 			"duration":    time.Since(t).String(),
 		})
-		if c.Err != nil {
-			fields.Errorf("Request aborted with error: %s", c.Err)
+		if c.Error != nil {
+			fields.Errorf("Request aborted with error: %s", c.Error)
 			return
 		}
 		fields.Info("Request completed")
