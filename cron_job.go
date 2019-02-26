@@ -15,7 +15,7 @@ func (c *cronJob) Start() {
 	log.Info("Starting cronjob")
 	cj := cron.New()
 	cj.AddFunc(c.spec, func() {
-		log.Info("Running cronjob")
+		log.Info("Running cronjob " + c.name)
 		c.handler()
 	})
 	cj.Start()
