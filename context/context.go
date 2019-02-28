@@ -35,7 +35,7 @@ type Context struct {
 	Request  *R
 	Headers  M
 	handlers []Handler
-	index    int8
+	index    int
 	m        mi
 }
 
@@ -114,9 +114,10 @@ func (c *Context) JSON(v interface{}) {
 }
 
 func (c *Context) Next() {
-	c.index++
-	for s := int8(len(c.handlers)); c.index < s; c.index++ {
+	c.index += 1
+	for s := len(c.handlers); c.index < s; {
 		c.handlers[c.index](c)
+		c.index += 1
 	}
 }
 
