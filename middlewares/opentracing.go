@@ -5,10 +5,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/entropyx/dd-trace-go/ddtrace/ext"
+	"github.com/entropyx/dd-trace-go/ddtrace/opentracer"
+	"github.com/entropyx/dd-trace-go/ddtrace/tracer"
 	opentracing "github.com/opentracing/opentracing-go"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
 	"github.com/entropyx/soul/context"
 	"github.com/entropyx/soul/env"

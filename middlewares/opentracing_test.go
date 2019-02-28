@@ -6,7 +6,7 @@ import (
 
 	"testing"
 
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+	"github.com/entropyx/dd-trace-go/ddtrace/tracer"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
