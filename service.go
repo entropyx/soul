@@ -109,6 +109,18 @@ func (s *Service) listenAll() {
 func (s *Service) listen(cmd *cobra.Command, args []string) {
 	routingKey := args[0]
 	forever := make(chan bool)
+	s.listenRouters(routingKey)
+	log.Printf("Waiting for messages. To exit press CTRL+C")
+	<-forever
+}
+
+func (s *Service) listenList(cmd *cobra.Command, args []string) {
+	for routingKey, handlers := range s.routes() {
+		fmt.Printf("%s: %d handlers\n", routingKey, len(handlers))
+	}
+}
+
+func (s *Service) listenRouters(routingKey string) {
 	for _, router := range s.routers {
 		router.connect()
 		if handlers, ok := router.routes[routingKey]; ok {
@@ -117,16 +129,6 @@ func (s *Service) listen(cmd *cobra.Command, args []string) {
 			continue
 		}
 		log.Error("Handler not found")
-	}
-
-	log.Printf("Waiting for messages. To exit press CTRL+C")
-	<-forever
-
-}
-
-func (s *Service) listenList(cmd *cobra.Command, args []string) {
-	for routingKey, handlers := range s.routes() {
-		fmt.Printf("%s: %d handlers\n", routingKey, len(handlers))
 	}
 }
 

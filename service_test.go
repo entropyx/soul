@@ -31,7 +31,7 @@ func TestListen(t *testing.T) {
 		router.Listen("logs.warning", func(c *context.Context) {})
 
 		Convey("When the routes are listened", func() {
-			service.listen(&cobra.Command{}, []string{"logs.warning"})
+			service.listenRouters("logs.warning")
 			time.Sleep(1 * time.Millisecond)
 
 			Convey("The engine should be connected", func() {
