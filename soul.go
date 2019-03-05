@@ -53,3 +53,7 @@ func (r *Router) connect() {
 		break
 	}
 }
+
+func LogFromContext(c context.Context) *logrus.Entry {
+	return c.Value(keyEntry).(*logrus.Entry)
+}

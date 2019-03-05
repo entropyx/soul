@@ -1,6 +1,7 @@
 package context
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -19,6 +20,10 @@ const (
 	TypeXProto = "application/x-protobuf"
 )
 
+type key string
+
+var keyEntry key = "entry"
+
 type Handler func(*Context)
 
 type C interface {
@@ -27,9 +32,9 @@ type C interface {
 }
 
 type Context struct {
-	C        C
-	Error    error
-	Log      *logrus.Entry
+	C     C
+	Error error
+	// Log      *logrus.Entry
 	TraceID  string
 	SpanID   string
 	Request  *R
@@ -51,7 +56,8 @@ type M map[string]interface{}
 type mi map[interface{}]interface{}
 
 func NewContext(c C) *Context {
-	context := &Context{C: c, Headers: M{}, Log: logrus.NewEntry(logrus.StandardLogger())}
+	context := &Context{C: c, Headers: M{}}
+	context.SetLog(logrus.NewEntry(logrus.StandardLogger()))
 	context.setRequest()
 	return context
 }
@@ -113,6 +119,10 @@ func (c *Context) JSON(v interface{}) {
 	c.publish(body, TypeJson)
 }
 
+func (c *Context) Log() *logrus.Entry {
+	return c.Get(keyEntry).(*logrus.Entry)
+}
+
 func (c *Context) Next() {
 	c.index++
 	for s := int8(len(c.handlers)); c.index < s; c.index++ {
@@ -139,11 +149,15 @@ func (c *Context) RunHandlers(handlers ...Handler) {
 	c.Next()
 }
 
-func (c *Context) Set(key string, value interface{}) {
+func (c *Context) Set(key interface{}, value interface{}) {
 	if c.m == nil {
 		c.m = mi{}
 	}
 	c.m[key] = value
+}
+
+func (c *Context) SetLog(entry *logrus.Entry) {
+	c.Set(keyEntry, entry)
 }
 
 func (c *Context) String(text string) {
@@ -178,4 +192,12 @@ func (m M) ForeachKey(handler func(key, val string) error) error {
 // Set conforms to the TextMapWriter interface.
 func (m M) Set(key, value string) {
 	m[key] = value
+}
+
+func LogFromContext(c context.Context) *logrus.Entry {
+	log, ok := c.Value(keyEntry).(*logrus.Entry)
+	if ok {
+		return log
+	}
+	return logrus.NewEntry(logrus.StandardLogger())
 }

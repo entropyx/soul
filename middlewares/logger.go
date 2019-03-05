@@ -30,10 +30,10 @@ func Logger(options *LoggerOptions) context.Handler {
 	entry := log.NewEntry(logger)
 
 	return func(c *context.Context) {
-		c.Log = entry
+		c.SetLog(entry)
 		t := time.Now()
 		c.Next()
-		fields := c.Log.WithFields(log.Fields{
+		fields := c.Log().WithFields(log.Fields{
 			"routing_key": c.Request.RoutingKey,
 			"duration":    time.Since(t).String(),
 		})

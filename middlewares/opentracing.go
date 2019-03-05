@@ -52,7 +52,7 @@ func Opentracing() context.Handler {
 			fields[k] = v
 		}
 		// span.SetTag(ext.SamplingPriority, ext.PriorityAutoKeep)
-		c.Log = c.Log.WithFields(fields)
+		c.SetLog(c.Log().WithFields(fields))
 		c.Set("span", span)
 		c.Next()
 		if err := c.Err; err != nil {
