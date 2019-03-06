@@ -1,7 +1,6 @@
 package context
 
 import (
-	"math"
 	"testing"
 
 	c "github.com/smartystreets/goconvey/convey"
@@ -12,8 +11,12 @@ func TestIndex(t *testing.T) {
 		var index uint8
 		f := func(c *Context) {
 			index++
+			c.Next()
+
 		}
-		handlers := []Handler{f, f, func(c *Context) { c.Abort("") }, f}
+		handlers := []Handler{f, f, func(c *Context) {
+			c.Abort("")
+		}, f}
 
 		c.Convey("When the handlers run", func() {
 			context := &Context{Request: &R{}}
@@ -24,7 +27,7 @@ func TestIndex(t *testing.T) {
 			})
 
 			c.Convey("The context index should be the abort index", func() {
-				c.So(context.index, c.ShouldEqual, math.MaxInt8)
+				c.So(context.index, c.ShouldEqual, 66)
 			})
 		})
 	})

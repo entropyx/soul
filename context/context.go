@@ -78,7 +78,7 @@ func (c *Context) Bind(v interface{}) error {
 }
 
 func (c *Context) Abort(v interface{}) {
-	c.index = math.MaxInt8 - 1
+	c.index = math.MaxInt8 / 2
 	r := c.Request
 	if v == nil {
 		return
@@ -125,8 +125,10 @@ func (c *Context) Log() *logrus.Entry {
 
 func (c *Context) Next() {
 	c.index++
-	for s := int8(len(c.handlers)); c.index < s; c.index++ {
+
+	for s := int8(len(c.handlers)); c.index < s; {
 		c.handlers[c.index](c)
+		c.index++
 	}
 }
 
