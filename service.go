@@ -49,7 +49,7 @@ func (s *Service) Command(command *cobra.Command) {
 }
 
 func (s *Service) CronJob(name, spec string, handler func()) {
-	s.cronJobs[name] = &cronJob{name, spec, handler}
+	s.cronJobs[name] = &cronJob{name, handler}
 }
 
 func (s *Service) NewRouter(engine Engine) *Router {
@@ -75,6 +75,7 @@ func (s *Service) addCommandCronJob() {
 		Args:  cobra.ExactArgs(1),
 		Run:   s.cronjob,
 	}
+	cronJobCmd.Flags().StringVarP(&schedule, "schedule", "s", "1h", "Run cron job task on the time")
 	s.rootCmd.AddCommand(cronJobCmd)
 }
 
@@ -101,7 +102,7 @@ func (s *Service) addCommands() {
 func (s *Service) cronjob(cmd *cobra.Command, args []string) {
 	job := args[0]
 	if cronjob, ok := s.cronJobs[job]; ok {
-		cronjob.Start()
+		cronjob.Start(schedule)
 		return
 	}
 	log.Fatal("Invalid job")

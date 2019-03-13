@@ -7,14 +7,13 @@ import (
 
 type cronJob struct {
 	name    string
-	spec    string
 	handler func()
 }
 
-func (c *cronJob) Start() {
+func (c *cronJob) Start(spec string) {
 	log.Info("Starting cronjob")
 	cj := cron.New()
-	cj.AddFunc(c.spec, func() {
+	cj.AddFunc(spec, func() {
 		log.Info("Running cronjob " + c.name)
 		c.handler()
 	})
