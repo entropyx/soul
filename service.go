@@ -55,6 +55,7 @@ func (s *Service) NewRouter(engine Engine) *Router {
 }
 
 func (s *Service) Run() {
+	s.addCommandCronJob()
 	s.addCommandListener()
 	s.addCommands()
 	if err := s.rootCmd.Execute(); err != nil {
