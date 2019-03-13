@@ -101,9 +101,10 @@ func (s *Service) addCommands() {
 
 func (s *Service) cronjob(cmd *cobra.Command, args []string) {
 	job := args[0]
+	forever := make(chan bool)
 	if cronjob, ok := s.cronJobs[job]; ok {
 		cronjob.Start(schedule)
-		return
+		<-forever
 	}
 	log.Fatal("Invalid job")
 
