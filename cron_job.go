@@ -11,7 +11,7 @@ type cronJob struct {
 }
 
 func (c *cronJob) Start(spec string) {
-	log.Info("Starting cronjob")
+	log.Info("Scheduling cronjob every " + spec)
 	cj := cron.New()
 	cj.AddFunc(spec, func() {
 		log.Info("Running cronjob " + c.name)
