@@ -48,7 +48,7 @@ func (s *Service) Command(command *cobra.Command) {
 	s.commands = append(s.commands, command)
 }
 
-func (s *Service) CronJob(name, spec string, handler func()) {
+func (s *Service) CronJob(name, handler func()) {
 	s.cronJobs[name] = &cronJob{name, handler}
 }
 
