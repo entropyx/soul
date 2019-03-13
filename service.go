@@ -8,7 +8,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var schedule string
+
 const (
+	cmdLongCronJob  = "Run task on the given schedule"
+	cmdShortCronJob = "Run task on the given schedule"
+
 	cmdShortListener = "Listen to messages in a routing key"
 	cmdLongListener  = "Bind a consumer to a routing key. Every time a new message is received the consumer will execute the attached handlers."
 
@@ -66,7 +71,7 @@ func (s *Service) Run() {
 func (s *Service) addCommandCronJob() {
 	cronJobCmd := &cobra.Command{
 		Use:   "cronjob job",
-		Short: cmdShortListener,
+		Short: cmdShortCronJob,
 		Args:  cobra.ExactArgs(1),
 		Run:   s.cronjob,
 	}
