@@ -52,13 +52,15 @@ func TestListen(t *testing.T) {
 func TestCronJob(t *testing.T) {
 	Convey("Given a service with a cronjob", t, func() {
 		wg := &sync.WaitGroup{}
-		wg.Add(1)
+		wg.Add(2)
 		mock := &cronJobMock{wg: wg}
 		service := New("test")
-		service.CronJob("test", "@every 2ms", mock.Run)
+		schedule = "@every 2ms"
+		service.CronJob("test", mock.Run)
 
 		Convey("When the cronjob starts", func() {
-			service.cronjob(&cobra.Command{}, []string{"test"})
+			go service.cronjob(&cobra.Command{}, []string{"test"})
+			wg.Done()
 			wg.Wait()
 
 			Convey("The cronjob should be called", func() {
