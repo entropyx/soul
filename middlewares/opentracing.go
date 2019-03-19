@@ -16,14 +16,14 @@ import (
 )
 
 const (
-	datadogTraceHeaderName  = "trace-id"
-	datadogParentHeaderName = "parent-id"
+	datadogTraceHeaderName  = "trace_id"
+	datadogParentHeaderName = "parent_id"
 )
 
 func ConfigureDatadog(service string) (opentracing.Tracer, error) {
 	cfg := &tracer.PropagatorConfig{
-		TraceHeader:  "trace-id",
-		ParentHeader: "parent-id",
+		TraceHeader:  "trace_id",
+		ParentHeader: "parent_id",
 	}
 	propagator := tracer.NewPropagator(cfg)
 	t := opentracer.New(
