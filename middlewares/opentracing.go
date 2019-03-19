@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"os"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -48,8 +49,9 @@ func Opentracing() context.Handler {
 		defer span.Finish()
 		t.Inject(span.Context(), opentracing.HTTPHeaders, headers)
 		for k, v := range headers {
-			c.Headers[k] = v
-			fields[k] = v
+			fk := strings.Replace(k, "-", "_", -1)
+			c.Headers[fk] = v
+			fields[fk] = v
 		}
 		// span.SetTag(ext.SamplingPriority, ext.PriorityAutoKeep)
 		c.SetLog(c.Log().WithFields(fields))
