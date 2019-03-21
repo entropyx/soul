@@ -3,6 +3,7 @@ package middlewares
 import (
 	"time"
 
+	"github.com/entropyx/errors"
 	"github.com/entropyx/soul/context"
 	"github.com/entropyx/soul/env"
 	log "github.com/sirupsen/logrus"
@@ -38,7 +39,12 @@ func Logger(options *LoggerOptions) context.Handler {
 			"duration":    time.Since(t).String(),
 		})
 		if c.Error != nil {
-			fields.Errorf("Request aborted with error: %s", c.Error)
+			errorFields := fields.WithField("error.message", c.Error.Error())
+			err, ok := c.Error.(errors.Error)
+			if ok {
+				errorFields = fields.WithFields(log.Fields{"error.stack": err.StackTrace, "error.kind": err.Code})
+			}
+			errorFields.Error("Request aborted with error")
 			return
 		}
 		fields.Info("Request completed")
