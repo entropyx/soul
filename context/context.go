@@ -20,9 +20,11 @@ const (
 	TypeXProto = "application/x-protobuf"
 )
 
-type key string
+type key uint
 
-var keyEntry key = "entry"
+const (
+	keyEntry key = iota
+)
 
 type Handler func(*Context)
 
