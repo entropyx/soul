@@ -43,6 +43,10 @@ func Opentracing() context.Handler {
 	return func(c *context.Context) {
 		headers := context.M{}
 		fields := log.Fields{}
+		requestHeaders := c.Request.Headers
+
+		c.Log().Debugf("Tracing info from headers: span_id:%s trace_id:%s", requestHeaders[datadogParentHeaderName], requestHeaders[datadogTraceHeaderName])
+
 		t := opentracing.GlobalTracer()
 		spanCtx, _ := t.Extract(opentracing.HTTPHeaders, c.Request.Headers)
 		span := t.StartSpan("new-request", opentracing.ChildOf(spanCtx))
@@ -53,6 +57,9 @@ func Opentracing() context.Handler {
 			c.Headers[fk] = v
 			fields[fk] = v
 		}
+
+		c.Log().Debugf("Tracing info in response headers: span_id:%s trace_id:%s", c.Headers[datadogParentHeaderName], c.Headers[datadogTraceHeaderName])
+
 		// span.SetTag(ext.SamplingPriority, ext.PriorityAutoKeep)
 		c.SetLog(c.Log().WithFields(fields))
 		c.Set("span", span)
