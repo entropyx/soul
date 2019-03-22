@@ -30,18 +30,16 @@ func Logger(options *LoggerOptions) context.Handler {
 	entry := log.NewEntry(logger)
 
 	return func(c *context.Context) {
-		c.SetLog(entry)
 		t := time.Now()
+		fields := entry.WithField("routing_key", c.Request.RoutingKey)
+		c.SetLog(fields)
 		c.Next()
-		fields := c.Log().WithFields(log.Fields{
-			"routing_key": c.Request.RoutingKey,
-			"duration":    time.Since(t).String(),
-		})
+		durationField := c.Log().WithField("duration", time.Since(t).String())
 		if c.Error != nil {
-			errorField := fields.WithField("error.message", c.Error.Error())
+			errorField := durationField.WithField("error.message", c.Error.Error())
 			errorField.Error("Request aborted with error")
 			return
 		}
-		fields.Info("Request completed")
+		durationField.Info("Request completed")
 	}
 }
