@@ -33,6 +33,7 @@ func Logger(options *LoggerOptions) context.Handler {
 		t := time.Now()
 		fields := entry.WithField("routing_key", c.Request.RoutingKey)
 		c.SetLog(fields)
+		c.Log().Info("Incoming request")
 		c.Next()
 		durationField := c.Log().WithField("duration", time.Since(t).String())
 		if c.Error != nil {
