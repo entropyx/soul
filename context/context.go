@@ -31,6 +31,8 @@ type Handler func(*Context)
 type C interface {
 	Publish(*R)
 	Request() *R
+	Ack(args ...interface{})
+	Nack(args ...interface{})
 }
 
 type Context struct {
@@ -62,6 +64,10 @@ func NewContext(c C) *Context {
 	context.SetLog(logrus.NewEntry(logrus.StandardLogger()))
 	context.setRequest()
 	return context
+}
+
+func (c *Context) Ack(args ...interface{}) {
+	c.C.Ack(args...)
 }
 
 func (c *Context) Bind(v interface{}) error {
@@ -123,6 +129,10 @@ func (c *Context) JSON(v interface{}) {
 
 func (c *Context) Log() *logrus.Entry {
 	return c.Get(keyEntry).(*logrus.Entry)
+}
+
+func (c *Context) Nack(args ...interface{}) {
+	c.C.Nack(args...)
 }
 
 func (c *Context) Next() {

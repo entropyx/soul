@@ -84,6 +84,14 @@ func (a *AMQP) Run() error {
 	return nil
 }
 
+func (c *Context) Ack(args ...interface{}) {
+	c.Delivery.Ack(args[0].(bool))
+}
+
+func (c *Context) Nack(args ...interface{}) {
+	c.Delivery.Nack(args[0].(bool), args[1].(bool))
+}
+
 func (c *Context) Publish(r *context.R) {
 	c.Headers = amqp.Table(r.Headers)
 	c.Data(r.Body, r.ContentType)
