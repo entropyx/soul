@@ -1,6 +1,7 @@
 package soul
 
 import (
+	"strings"
 	"time"
 
 	"github.com/entropyx/soul/context"
@@ -52,4 +53,15 @@ func (r *Router) connect() {
 		}
 		break
 	}
+}
+
+func GetValue(key string) string {
+	for _, vs := range vars {
+		split := strings.Split(vs, "=")
+		k, v := split[0], split[1]
+		if k == key {
+			return v
+		}
+	}
+	return ""
 }

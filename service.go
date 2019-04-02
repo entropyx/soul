@@ -9,6 +9,7 @@ import (
 )
 
 var schedule string
+var vars []string
 
 const (
 	cmdLongCronJob  = "Run task on the given schedule"
@@ -40,6 +41,8 @@ func New(name string) *Service {
 		Long:  "",
 		Run:   func(cmd *cobra.Command, args []string) {},
 	}
+
+	rootCmd.PersistentFlags().StringArrayVarP(&vars, "variables", "v", []string{}, "set variable list")
 
 	return &Service{Name: name, rootCmd: rootCmd, cronJobs: map[string]*cronJob{}}
 }
