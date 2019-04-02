@@ -10,6 +10,11 @@ import (
 	"github.com/streadway/amqp"
 )
 
+type AckOptions struct {
+	Multiple bool
+	Requeue  bool
+}
+
 type AMQP struct {
 	ExchangeName    string
 	ExchangeType    string
@@ -85,11 +90,13 @@ func (a *AMQP) Run() error {
 }
 
 func (c *Context) Ack(args ...interface{}) {
-	c.Delivery.Ack(args[0].(bool))
+	opts := args[0].(*AckOptions)
+	c.Delivery.Ack(opts.Multiple)
 }
 
 func (c *Context) Nack(args ...interface{}) {
-	c.Delivery.Nack(args[0].(bool), args[1].(bool))
+	opts := args[0].(*AckOptions)
+	c.Delivery.Nack(opts.Multiple, opts.Requeue)
 }
 
 func (c *Context) Publish(r *context.R) {
