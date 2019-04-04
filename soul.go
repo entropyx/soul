@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"github.com/entropyx/soul/context"
+	"github.com/entropyx/soul/engines"
 	log "github.com/sirupsen/logrus"
 )
 
 type Router struct {
 	RouteGroup
-	engine Engine
+	engine engines.Engine
 	routes map[string][]context.Handler
 }
 
@@ -18,12 +19,6 @@ type RouteGroup struct {
 	routingKey string
 	handlers   []context.Handler
 	router     *Router
-}
-
-type Engine interface {
-	MergeRoutingKeys(string, string) string
-	Connect() error
-	Consume(string, []context.Handler) error
 }
 
 func (r *RouteGroup) Group(routingKey string) *RouteGroup {

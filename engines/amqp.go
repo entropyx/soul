@@ -24,6 +24,10 @@ type AMQP struct {
 	conn            *rabbitgo.Connection
 }
 
+type AMQPConsumer struct {
+	*rabbitgo.Consumer
+}
+
 type Context struct {
 	*rabbitgo.Delivery
 }
@@ -46,7 +50,7 @@ func (a *AMQP) Connect() error {
 	return nil
 }
 
-func (a *AMQP) Consume(routingKey string, handlers []context.Handler) error {
+func (a *AMQP) Consumer(routingKey string) (Consumer, error) {
 	exchange := &rabbitgo.Exchange{
 		Name:    a.ExchangeName,
 		Type:    a.ExchangeType,
@@ -66,14 +70,9 @@ func (a *AMQP) Consume(routingKey string, handlers []context.Handler) error {
 	}
 	consumer, err := a.conn.NewConsumer(exchange, queue, binding, consumerConfig)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	h := func(d *rabbitgo.Delivery) {
-		c := &Context{d}
-		context := context.NewContext(c)
-		context.RunHandlers(handlers...)
-	}
-	return consumer.ConsumeRPC(h)
+	return &AMQPConsumer{consumer}, nil
 }
 
 func (a *AMQP) MergeRoutingKeys(absolute, relative string) string {
@@ -87,6 +86,19 @@ func (a *AMQP) MergeRoutingKeys(absolute, relative string) string {
 
 func (a *AMQP) Run() error {
 	return nil
+}
+
+func (a *AMQPConsumer) Consume(handlers []context.Handler) error {
+	h := func(d *rabbitgo.Delivery) {
+		c := &Context{d}
+		context := context.NewContext(c)
+		context.RunHandlers(handlers...)
+	}
+	return a.ConsumeRPC(h)
+}
+
+func (a *AMQPConsumer) Close() error {
+	return a.Shutdown()
 }
 
 func (c *Context) Ack(args ...interface{}) {

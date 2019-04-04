@@ -10,18 +10,30 @@ type Mock struct {
 	Handlers    []context.Handler
 }
 
+type MockConsumer struct {
+	*Mock
+}
+
 func (m *Mock) Connect() error {
 	m.IsConnected = true
 	return nil
 }
 
-func (m *Mock) Consume(routingKey string, handlers []context.Handler) error {
+func (m *Mock) Consumer(routingKey string) (Consumer, error) {
 	m.RoutingKey = routingKey
-	m.Handlers = handlers
-	return nil
+	return &MockConsumer{m}, nil
 }
 
 func (m *Mock) MergeRoutingKeys(absolute, relative string) string {
 	amqp := &AMQP{}
 	return amqp.MergeRoutingKeys(absolute, relative)
+}
+
+func (m *MockConsumer) Consume(handlers []context.Handler) error {
+	m.Handlers = handlers
+	return nil
+}
+
+func (m *MockConsumer) Close() error {
+	return nil
 }

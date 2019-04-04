@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/entropyx/soul/context"
+	"github.com/entropyx/soul/engines"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -55,7 +56,7 @@ func (s *Service) CronJob(name string, handler func()) {
 	s.cronJobs[name] = &cronJob{name, handler}
 }
 
-func (s *Service) NewRouter(engine Engine) *Router {
+func (s *Service) NewRouter(engine engines.Engine) *Router {
 	router := &Router{engine: engine, routes: map[string][]context.Handler{}}
 	router.router = router
 	s.routers = append(s.routers, router)
@@ -132,11 +133,17 @@ func (s *Service) listenList(cmd *cobra.Command, args []string) {
 }
 
 func (s *Service) listenRouters(routingKey string) {
+	var consumers []engines.Consumer
 	for _, router := range s.routers {
 		router.connect()
 		if handlers, ok := router.routes[routingKey]; ok {
 			log.Info("Starting handler")
-			go router.engine.Consume(routingKey, handlers)
+			consumer, err := router.engine.Consumer(routingKey)
+			if err != nil {
+				panic(err)
+			}
+			consumers = append(consumers, consumer)
+			consumer.Consume(handlers)
 			continue
 		}
 		log.Error("Handler not found")
