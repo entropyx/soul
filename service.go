@@ -28,6 +28,7 @@ type Service struct {
 	routers  []*Router
 	cronJobs map[string]*cronJob
 	commands []*cobra.Command
+	close    chan uint8
 	flags    flags
 }
 

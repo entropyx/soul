@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"net/http"
 	"time"
 
 	"errors"
@@ -59,11 +60,33 @@ type M map[string]interface{}
 
 type mi map[interface{}]interface{}
 
+func HTTPHeaderToM(header http.Header) M {
+	m := M{}
+	for k, v := range header {
+		m[k] = v
+	}
+	return m
+}
+
+func MtoHeader(m M) http.Header {
+	header := http.Header{}
+	for k, v := range m {
+		header[k] = v.([]string)
+	}
+	return header
+}
+
 func NewContext(c C) *Context {
 	context := &Context{C: c, Headers: M{}}
 	context.SetLog(logrus.NewEntry(logrus.StandardLogger()))
 	context.setRequest()
 	return context
+}
+
+func NewAndRun(c C, handlers ...Handler) *Context {
+	ctx := NewContext(c)
+	ctx.RunHandlers(handlers...)
+	return ctx
 }
 
 func (c *Context) Ack(args ...interface{}) {
