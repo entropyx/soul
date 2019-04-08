@@ -32,8 +32,7 @@ func TestListen(t *testing.T) {
 
 		Convey("When the routes are listened", func() {
 			service.listenRouters("logs.warning")
-			time.Sleep(1 * time.Millisecond)
-
+			time.Sleep(10 * time.Millisecond)
 			Convey("The engine should be connected", func() {
 				So(mock.IsConnected, ShouldBeTrue)
 			})

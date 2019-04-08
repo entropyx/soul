@@ -144,7 +144,7 @@ func (s *Service) listenRouters(routingKey string) {
 				panic(err)
 			}
 			consumers = append(consumers, consumer)
-			consumer.Consume(handlers)
+			go consumer.Consume(handlers)
 			continue
 		}
 		log.Error("Handler not found")
