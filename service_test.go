@@ -22,7 +22,7 @@ func (c *cronJobMock) Run() {
 	c.wg.Done()
 }
 
-func TestListen(t *testing.T) {
+func Test_listenRouters(t *testing.T) {
 	Convey("Given a service with routes", t, func() {
 		mock := &engines.Mock{}
 		service := New("test")
