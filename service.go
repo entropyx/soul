@@ -2,6 +2,8 @@ package soul
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 
 	"github.com/entropyx/soul/context"
 	"github.com/entropyx/soul/engines"
@@ -23,13 +25,14 @@ const (
 )
 
 type Service struct {
-	Name     string
-	rootCmd  *cobra.Command
-	routers  []*Router
-	cronJobs map[string]*cronJob
-	commands []*cobra.Command
-	close    chan uint8
-	flags    flags
+	Name      string
+	rootCmd   *cobra.Command
+	routers   []*Router
+	cronJobs  map[string]*cronJob
+	commands  []*cobra.Command
+	consumers []engines.Consumer
+	close     chan uint8
+	flags     flags
 }
 
 type flags struct {
@@ -46,7 +49,7 @@ func New(name string) *Service {
 
 	rootCmd.PersistentFlags().StringArrayVarP(&vars, "variables", "v", []string{}, "set variable list")
 
-	return &Service{Name: name, rootCmd: rootCmd, cronJobs: map[string]*cronJob{}}
+	return &Service{Name: name, rootCmd: rootCmd, cronJobs: map[string]*cronJob{}, close: make(chan uint8)}
 }
 
 func (s *Service) Command(command *cobra.Command) {
@@ -121,10 +124,23 @@ func (s *Service) listenAll() {
 
 func (s *Service) listen(cmd *cobra.Command, args []string) {
 	routingKey := args[0]
-	forever := make(chan bool)
 	s.listenRouters(routingKey)
 	log.Printf("Waiting for messages. To exit press CTRL+C")
-	<-forever
+	s.notifyInterrupt()
+	code := <-s.close
+	log.Infof("%s is shutting down", s.Name)
+	s.shutdown()
+	log.Println("Exit with code", code)
+}
+
+func (s *Service) notifyInterrupt() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		sig := <-c
+		log.Info("Signal ", sig)
+		s.close <- 0
+	}()
 }
 
 func (s *Service) listenList(cmd *cobra.Command, args []string) {
@@ -134,7 +150,6 @@ func (s *Service) listenList(cmd *cobra.Command, args []string) {
 }
 
 func (s *Service) listenRouters(routingKey string) {
-	var consumers []engines.Consumer
 	for _, router := range s.routers {
 		router.connect()
 		if handlers, ok := router.routes[routingKey]; ok {
@@ -143,7 +158,7 @@ func (s *Service) listenRouters(routingKey string) {
 			if err != nil {
 				panic(err)
 			}
-			consumers = append(consumers, consumer)
+			s.consumers = append(s.consumers, consumer)
 			go consumer.Consume(handlers)
 			continue
 		}
@@ -159,4 +174,21 @@ func (s *Service) routes() map[string][]context.Handler {
 		}
 	}
 	return routes
+}
+
+func (s *Service) shutdown() {
+	for _, consumer := range s.consumers {
+		err := consumer.Close()
+		if err != nil {
+			log.Errorf("Error while closing consumer: %s", err.Error())
+			continue
+		}
+	}
+	for _, router := range s.routers {
+		err := router.engine.Close()
+		if err != nil {
+			log.Errorf("Error while closing connection: %s", err.Error())
+			continue
+		}
+	}
 }

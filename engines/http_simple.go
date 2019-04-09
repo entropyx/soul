@@ -33,8 +33,11 @@ type httpHandler struct {
 type responseWriter struct {
 }
 
-func (h *HTTPSimple) Connect() error {
+func (h *HTTPSimple) Close() error {
+	return nil
+}
 
+func (h *HTTPSimple) Connect() error {
 	return nil
 }
 

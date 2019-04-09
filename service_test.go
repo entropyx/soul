@@ -2,6 +2,7 @@ package soul
 
 import (
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 
@@ -45,6 +46,41 @@ func TestListen(t *testing.T) {
 				So(mock.Handlers, ShouldHaveLength, 2)
 			})
 		})
+
+		Convey("When the listen command is executed an a close signal is sent", func() {
+			go service.listen(&cobra.Command{}, []string{"logs.warning"})
+			time.Sleep(1 * time.Millisecond)
+			service.close <- 1
+			time.Sleep(1 * time.Millisecond)
+
+			Convey("The engine should be closed", func() {
+				So(mock.IsConnected, ShouldBeFalse)
+			})
+
+			Convey("The consumers should be closed", func() {
+				for _, c := range service.consumers {
+					consumer := c.(*engines.MockConsumer)
+					So(consumer.IsConnected, ShouldBeFalse)
+				}
+			})
+		})
+	})
+}
+
+func Test_notifyInterrupt(t *testing.T) {
+	Convey("Given a sigint listener", t, func() {
+		service := &Service{close: make(chan uint8)}
+		service.notifyInterrupt()
+
+		Convey("When a interrupt signal is sent", func() {
+			syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+			c := <-service.close
+
+			Convey("A close signal should be sent", func() {
+				So(c, ShouldEqual, 0)
+			})
+		})
+
 	})
 }
 

@@ -32,6 +32,10 @@ type Context struct {
 	*rabbitgo.Delivery
 }
 
+func (a *AMQP) Close() error {
+	return a.conn.Close()
+}
+
 func (a *AMQP) Connect() error {
 	rabbitPort, err := strconv.Atoi(os.Getenv("AMQP_PORT"))
 	if err != nil {
