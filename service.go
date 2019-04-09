@@ -124,11 +124,15 @@ func (s *Service) gracefulShutdownConsumer() {
 	consumer, _ := engine.Consumer("/graceful_shutdown")
 	handlers := []context.Handler{
 		func(c *context.Context) {
-			s.shutdown()
+			c.Log().Info("Graceful shutdown")
+			s.close <- 0
+			c.Headers["status"] = 201
+			c.String("done")
 		},
 	}
 	consumer.Consume(handlers)
 	s.consumers = append(s.consumers, consumer)
+	log.Info("Graceful shutdown configured")
 }
 
 func (s *Service) listenAll() {
