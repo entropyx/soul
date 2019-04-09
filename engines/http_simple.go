@@ -2,12 +2,17 @@ package engines
 
 import (
 	ctx "context"
+	"errors"
 	"io/ioutil"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/entropyx/soul/context"
 )
+
+var servers = map[string]*Server{}
+var mutex = &sync.Mutex{}
 
 type HTTPSimple struct {
 	Address        string
@@ -17,13 +22,18 @@ type HTTPSimple struct {
 }
 
 type HTTPSimpleConsumer struct {
-	server *http.Server
-	path   string
+	address string
+	path    string
 }
 
 type HTTPSimpleContext struct {
 	w http.ResponseWriter
 	r *http.Request
+}
+
+type Server struct {
+	*http.Server
+	patterns map[string][]context.Handler
 }
 
 type httpHandler struct {
@@ -34,21 +44,30 @@ type responseWriter struct {
 }
 
 func (h *HTTPSimple) Close() error {
-	return nil
+	server := servers[h.Address]
+	return server.Shutdown(ctx.Background())
 }
 
 func (h *HTTPSimple) Connect() error {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if _, ok := servers[h.Address]; !ok {
+		s := &http.Server{
+			Addr:           h.Address,
+			ReadTimeout:    h.ReadTimeout,
+			WriteTimeout:   h.WriteTimeout,
+			MaxHeaderBytes: int(h.MaxHeaderBytes),
+		}
+		server := &Server{s, map[string][]context.Handler{}}
+		server.setHandler()
+		servers[h.Address] = server
+		go server.ListenAndServe()
+	}
 	return nil
 }
 
 func (h *HTTPSimple) Consumer(routingKey string) (Consumer, error) {
-	s := &http.Server{
-		Addr:           h.Address,
-		ReadTimeout:    h.ReadTimeout,
-		WriteTimeout:   h.WriteTimeout,
-		MaxHeaderBytes: int(h.MaxHeaderBytes),
-	}
-	return &HTTPSimpleConsumer{s, routingKey}, nil
+	return &HTTPSimpleConsumer{h.Address, routingKey}, nil
 }
 
 func (h *HTTPSimple) MergeRoutingKeys(absolute, relative string) string {
@@ -64,22 +83,19 @@ func (h *HTTPSimple) MergeRoutingKeys(absolute, relative string) string {
 }
 
 func (h *HTTPSimpleConsumer) Consume(handlers []context.Handler) error {
-	f := func(w http.ResponseWriter, r *http.Request) {
-		u := r.URL
-		if u.Path != h.path {
-			w.WriteHeader(404)
-			return
-		}
-		c := &HTTPSimpleContext{w, r}
-		context.NewAndRun(c, handlers...)
+	mutex.Lock()
+	defer mutex.Unlock()
+	server, ok := servers[h.address]
+	if !ok {
+		return errors.New("undefined server")
 	}
-	handler := &httpHandler{f}
-	h.server.Handler = handler
-	return h.server.ListenAndServe()
+	server.patterns[h.path] = handlers
+	return nil
 }
 
 func (h *HTTPSimpleConsumer) Close() error {
-	return h.server.Shutdown(ctx.Background())
+	delete(servers[h.address].patterns, h.path)
+	return nil
 }
 
 func (c *HTTPSimpleContext) Ack(args ...interface{}) {
@@ -120,4 +136,21 @@ func (c *HTTPSimpleContext) Request() *context.R {
 
 func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.handler(w, r)
+}
+
+func (s *Server) setHandler() {
+	f := func(w http.ResponseWriter, r *http.Request) {
+		u := r.URL
+		mutex.Lock()
+		handlers, ok := s.patterns[u.Path]
+		mutex.Unlock()
+		if !ok {
+			w.WriteHeader(404)
+			return
+		}
+		c := &HTTPSimpleContext{w, r}
+		context.NewAndRun(c, handlers...)
+	}
+	handler := &httpHandler{f}
+	s.Handler = handler
 }

@@ -20,6 +20,7 @@ func TestConsume(t *testing.T) {
 			},
 		}
 		engine := &HTTPSimple{Address: ":8081"}
+		engine.Connect()
 		consumer, _ := engine.Consumer("/resource")
 
 		Convey("When it is consumed", func() {
@@ -27,7 +28,8 @@ func TestConsume(t *testing.T) {
 			time.Sleep(10 * time.Millisecond)
 
 			Convey("And a valid request is sent", func() {
-				resp, _ := http.Get("http://localhost:8081/resource")
+				resp, err := http.Get("http://localhost:8081/resource")
+				So(err, ShouldBeNil)
 				Convey("The response should be valid", func() {
 					So(resp.StatusCode, ShouldEqual, 200)
 					So(resp.Header["Test"], ShouldResemble, []string{"a"})
