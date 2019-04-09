@@ -118,6 +118,19 @@ func (s *Service) cronjob(cmd *cobra.Command, args []string) {
 
 }
 
+func (s *Service) gracefulShutdownConsumer() {
+	engine := &engines.HTTPSimple{Address: ":8081"}
+	engine.Connect()
+	consumer, _ := engine.Consumer("/graceful_shutdown")
+	handlers := []context.Handler{
+		func(c *context.Context) {
+			s.shutdown()
+		},
+	}
+	consumer.Consume(handlers)
+	s.consumers = append(s.consumers, consumer)
+}
+
 func (s *Service) listenAll() {
 
 }
@@ -127,6 +140,7 @@ func (s *Service) listen(cmd *cobra.Command, args []string) {
 	s.listenRouters(routingKey)
 	log.Printf("Waiting for messages. To exit press CTRL+C")
 	s.notifyInterrupt()
+	s.gracefulShutdownConsumer()
 	code := <-s.close
 	log.Infof("%s is shutting down", s.Name)
 	s.shutdown()

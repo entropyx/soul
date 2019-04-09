@@ -59,8 +59,10 @@ func TestListen(t *testing.T) {
 
 			Convey("The consumers should be closed", func() {
 				for _, c := range service.consumers {
-					consumer := c.(*engines.MockConsumer)
-					So(consumer.IsConnected, ShouldBeFalse)
+					consumer, ok := c.(*engines.MockConsumer)
+					if ok {
+						So(consumer.IsConnected, ShouldBeFalse)
+					}
 				}
 			})
 		})
