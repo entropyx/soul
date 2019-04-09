@@ -2,6 +2,7 @@ package soul
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 
@@ -22,6 +23,9 @@ const (
 	cmdLongListener  = "Bind a consumer to a routing key. Every time a new message is received the consumer will execute the attached handlers."
 
 	cmdShortListenerList = "List the available routing keys"
+
+	cmdLongQuit  = "Gracefully shutdown"
+	cmdShortQuit = "Gracefully shutdown"
 )
 
 type Service struct {
@@ -70,6 +74,7 @@ func (s *Service) NewRouter(engine engines.Engine) *Router {
 func (s *Service) Run() {
 	s.addCommandCronJob()
 	s.addCommandListener()
+	s.addCommandQuit()
 	s.addCommands()
 	if err := s.rootCmd.Execute(); err != nil {
 		panic(err)
@@ -101,6 +106,16 @@ func (s *Service) addCommandListener() {
 	}
 	listenCmd.AddCommand(listenListCmd)
 	s.rootCmd.AddCommand(listenCmd)
+}
+
+func (s *Service) addCommandQuit() {
+	cronJobCmd := &cobra.Command{
+		Use:   "quit",
+		Short: cmdShortQuit,
+		Run:   quit,
+	}
+	cronJobCmd.Flags().StringVarP(&schedule, "schedule", "s", "1h", "Run cron job task on the time")
+	s.rootCmd.AddCommand(cronJobCmd)
 }
 
 func (s *Service) addCommands() {
@@ -209,4 +224,13 @@ func (s *Service) shutdown() {
 			continue
 		}
 	}
+}
+
+func quit(cmd *cobra.Command, args []string) {
+	_, err := http.Get("http://localhost:8081/graceful_shutdown")
+	if err != nil {
+		log.Fatal("Unable to shutdown. Is the service running?")
+		return
+	}
+	log.Info("Shutting down")
 }
