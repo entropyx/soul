@@ -4,6 +4,10 @@ type MockContext struct {
 	Response *R
 }
 
+func (m *MockContext) Ack(...interface{}) {
+
+}
+
 func (m *MockContext) Publish(r *R) {
 	m.Response = r
 }
