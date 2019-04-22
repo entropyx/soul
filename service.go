@@ -2,13 +2,18 @@ package soul
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
 
 	"github.com/entropyx/soul/context"
+	"github.com/entropyx/soul/engines"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 var schedule string
+var vars []string
 
 const (
 	cmdLongCronJob  = "Run task on the given schedule"
@@ -18,15 +23,20 @@ const (
 	cmdLongListener  = "Bind a consumer to a routing key. Every time a new message is received the consumer will execute the attached handlers."
 
 	cmdShortListenerList = "List the available routing keys"
+
+	cmdLongQuit  = "Gracefully shutdown"
+	cmdShortQuit = "Gracefully shutdown"
 )
 
 type Service struct {
-	Name     string
-	rootCmd  *cobra.Command
-	routers  []*Router
-	cronJobs map[string]*cronJob
-	commands []*cobra.Command
-	flags    flags
+	Name      string
+	rootCmd   *cobra.Command
+	routers   []*Router
+	cronJobs  map[string]*cronJob
+	commands  []*cobra.Command
+	consumers []engines.Consumer
+	close     chan uint8
+	flags     flags
 }
 
 type flags struct {
@@ -41,7 +51,9 @@ func New(name string) *Service {
 		Run:   func(cmd *cobra.Command, args []string) {},
 	}
 
-	return &Service{Name: name, rootCmd: rootCmd, cronJobs: map[string]*cronJob{}}
+	rootCmd.PersistentFlags().StringArrayVarP(&vars, "variables", "v", []string{}, "set variable list")
+
+	return &Service{Name: name, rootCmd: rootCmd, cronJobs: map[string]*cronJob{}, close: make(chan uint8)}
 }
 
 func (s *Service) Command(command *cobra.Command) {
@@ -52,7 +64,7 @@ func (s *Service) CronJob(name string, handler func()) {
 	s.cronJobs[name] = &cronJob{name, handler}
 }
 
-func (s *Service) NewRouter(engine Engine) *Router {
+func (s *Service) NewRouter(engine engines.Engine) *Router {
 	router := &Router{engine: engine, routes: map[string][]context.Handler{}}
 	router.router = router
 	s.routers = append(s.routers, router)
@@ -62,6 +74,7 @@ func (s *Service) NewRouter(engine Engine) *Router {
 func (s *Service) Run() {
 	s.addCommandCronJob()
 	s.addCommandListener()
+	s.addCommandQuit()
 	s.addCommands()
 	if err := s.rootCmd.Execute(); err != nil {
 		panic(err)
@@ -95,6 +108,16 @@ func (s *Service) addCommandListener() {
 	s.rootCmd.AddCommand(listenCmd)
 }
 
+func (s *Service) addCommandQuit() {
+	cronJobCmd := &cobra.Command{
+		Use:   "quit",
+		Short: cmdShortQuit,
+		Run:   quit,
+	}
+	cronJobCmd.Flags().StringVarP(&schedule, "schedule", "s", "1h", "Run cron job task on the time")
+	s.rootCmd.AddCommand(cronJobCmd)
+}
+
 func (s *Service) addCommands() {
 	s.rootCmd.AddCommand(s.commands...)
 }
@@ -110,16 +133,47 @@ func (s *Service) cronjob(cmd *cobra.Command, args []string) {
 
 }
 
+func (s *Service) gracefulShutdownConsumer() {
+	engine := &engines.HTTPSimple{Address: ":8081"}
+	engine.Connect()
+	consumer, _ := engine.Consumer("/graceful_shutdown")
+	handlers := []context.Handler{
+		func(c *context.Context) {
+			c.Log().Info("Graceful shutdown")
+			s.close <- 0
+			c.Headers["status"] = 201
+			c.String("done")
+		},
+	}
+	consumer.Consume(handlers)
+	s.consumers = append(s.consumers, consumer)
+	log.Info("Graceful shutdown configured")
+}
+
 func (s *Service) listenAll() {
 
 }
 
 func (s *Service) listen(cmd *cobra.Command, args []string) {
 	routingKey := args[0]
-	forever := make(chan bool)
 	s.listenRouters(routingKey)
 	log.Printf("Waiting for messages. To exit press CTRL+C")
-	<-forever
+	s.notifyInterrupt()
+	s.gracefulShutdownConsumer()
+	code := <-s.close
+	log.Infof("%s is shutting down", s.Name)
+	s.shutdown()
+	log.Println("Exit with code", code)
+}
+
+func (s *Service) notifyInterrupt() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		sig := <-c
+		log.Info("Signal ", sig)
+		s.close <- 0
+	}()
 }
 
 func (s *Service) listenList(cmd *cobra.Command, args []string) {
@@ -133,7 +187,12 @@ func (s *Service) listenRouters(routingKey string) {
 		router.connect()
 		if handlers, ok := router.routes[routingKey]; ok {
 			log.Info("Starting handler")
-			go router.engine.Consume(routingKey, handlers)
+			consumer, err := router.engine.Consumer(routingKey)
+			if err != nil {
+				panic(err)
+			}
+			s.consumers = append(s.consumers, consumer)
+			go consumer.Consume(handlers)
 			continue
 		}
 		log.Error("Handler not found")
@@ -148,4 +207,30 @@ func (s *Service) routes() map[string][]context.Handler {
 		}
 	}
 	return routes
+}
+
+func (s *Service) shutdown() {
+	for _, consumer := range s.consumers {
+		err := consumer.Close()
+		if err != nil {
+			log.Errorf("Error while closing consumer: %s", err.Error())
+			continue
+		}
+	}
+	for _, router := range s.routers {
+		err := router.engine.Close()
+		if err != nil {
+			log.Errorf("Error while closing connection: %s", err.Error())
+			continue
+		}
+	}
+}
+
+func quit(cmd *cobra.Command, args []string) {
+	_, err := http.Get("http://localhost:8081/graceful_shutdown")
+	if err != nil {
+		log.Fatal("Unable to shutdown. Is the service running?")
+		return
+	}
+	log.Info("Shutting down")
 }

@@ -8,6 +8,20 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+func TestGetValue(t *testing.T) {
+	Convey("Given a list of variables", t, func() {
+		vars = append(vars, "1=a", "2=b")
+
+		Convey("When the value 2 is got", func() {
+			v := GetValue("2")
+
+			Convey("The value should be 'b'", func() {
+				So(v, ShouldEqual, "b")
+			})
+		})
+	})
+}
+
 func TestInclude(t *testing.T) {
 	Convey("Given a group", t, func() {
 		service := &Service{}

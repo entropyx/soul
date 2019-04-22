@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"net/http"
 	"time"
 
 	"errors"
@@ -31,6 +32,8 @@ type Handler func(*Context)
 type C interface {
 	Publish(*R)
 	Request() *R
+	Ack(args ...interface{})
+	Nack(args ...interface{})
 }
 
 type Context struct {
@@ -57,11 +60,37 @@ type M map[string]interface{}
 
 type mi map[interface{}]interface{}
 
+func HTTPHeaderToM(header http.Header) M {
+	m := M{}
+	for k, v := range header {
+		m[k] = v
+	}
+	return m
+}
+
+func MtoHeader(m M) http.Header {
+	header := http.Header{}
+	for k, v := range m {
+		header[k] = v.([]string)
+	}
+	return header
+}
+
 func NewContext(c C) *Context {
 	context := &Context{C: c, Headers: M{}}
 	context.SetLog(logrus.NewEntry(logrus.StandardLogger()))
 	context.setRequest()
 	return context
+}
+
+func NewAndRun(c C, handlers ...Handler) *Context {
+	ctx := NewContext(c)
+	ctx.RunHandlers(handlers...)
+	return ctx
+}
+
+func (c *Context) Ack(args ...interface{}) {
+	c.C.Ack(args...)
 }
 
 func (c *Context) Bind(v interface{}) error {
@@ -123,6 +152,10 @@ func (c *Context) JSON(v interface{}) {
 
 func (c *Context) Log() *logrus.Entry {
 	return c.Get(keyEntry).(*logrus.Entry)
+}
+
+func (c *Context) Nack(args ...interface{}) {
+	c.C.Nack(args...)
 }
 
 func (c *Context) Next() {

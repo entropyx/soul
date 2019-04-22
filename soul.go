@@ -1,15 +1,17 @@
 package soul
 
 import (
+	"strings"
 	"time"
 
 	"github.com/entropyx/soul/context"
+	"github.com/entropyx/soul/engines"
 	log "github.com/sirupsen/logrus"
 )
 
 type Router struct {
 	RouteGroup
-	engine Engine
+	engine engines.Engine
 	routes map[string][]context.Handler
 }
 
@@ -17,12 +19,6 @@ type RouteGroup struct {
 	routingKey string
 	handlers   []context.Handler
 	router     *Router
-}
-
-type Engine interface {
-	MergeRoutingKeys(string, string) string
-	Connect() error
-	Consume(string, []context.Handler) error
 }
 
 func (r *RouteGroup) Group(routingKey string) *RouteGroup {
@@ -52,4 +48,15 @@ func (r *Router) connect() {
 		}
 		break
 	}
+}
+
+func GetValue(key string) string {
+	for _, vs := range vars {
+		split := strings.Split(vs, "=")
+		k, v := split[0], split[1]
+		if k == key {
+			return v
+		}
+	}
+	return ""
 }
