@@ -10,6 +10,7 @@ type Consumer interface {
 type Engine interface {
 	MergeRoutingKeys(string, string) string
 	Connect() error
+	IsConnected() bool
 	Close() error
 	Consumer(routingKey string) (Consumer, error)
 }

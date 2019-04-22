@@ -5,7 +5,7 @@ import (
 )
 
 type Mock struct {
-	IsConnected bool
+	isConnected bool
 	RoutingKey  string
 	Handlers    []context.Handler
 }
@@ -16,18 +16,22 @@ type MockConsumer struct {
 }
 
 func (m *Mock) Close() error {
-	m.IsConnected = false
+	m.isConnected = false
 	return nil
 }
 
 func (m *Mock) Connect() error {
-	m.IsConnected = true
+	m.isConnected = true
 	return nil
 }
 
 func (m *Mock) Consumer(routingKey string) (Consumer, error) {
 	m.RoutingKey = routingKey
 	return &MockConsumer{m, false}, nil
+}
+
+func (m *Mock) IsConnected() bool {
+	return m.isConnected
 }
 
 func (m *Mock) MergeRoutingKeys(absolute, relative string) string {
