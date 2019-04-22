@@ -8,6 +8,10 @@ func (m *MockContext) Ack(...interface{}) {
 
 }
 
+func (m *MockContext) Nack(...interface{}) {
+
+}
+
 func (m *MockContext) Publish(r *R) {
 	m.Response = r
 }
