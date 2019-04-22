@@ -40,6 +40,7 @@ func (r *RouteGroup) mergeRoutingKey(relativeRoutingKey string) string {
 }
 
 func (r *Router) connect() {
+	log.Info("Connecting router")
 	for {
 		if err := r.engine.Connect(); err != nil {
 			log.Error("Unable to connect. Retrying...")

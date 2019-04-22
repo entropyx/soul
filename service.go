@@ -28,15 +28,18 @@ const (
 	cmdShortQuit = "Gracefully shutdown"
 )
 
+type HealthCheck func() bool
+
 type Service struct {
-	Name      string
-	rootCmd   *cobra.Command
-	routers   []*Router
-	cronJobs  map[string]*cronJob
-	commands  []*cobra.Command
-	consumers []engines.Consumer
-	close     chan uint8
-	flags     flags
+	Name         string
+	healthChecks map[string]HealthCheck
+	rootCmd      *cobra.Command
+	routers      []*Router
+	cronJobs     map[string]*cronJob
+	commands     []*cobra.Command
+	consumers    []engines.Consumer
+	close        chan uint8
+	flags        flags
 }
 
 type flags struct {
@@ -53,7 +56,7 @@ func New(name string) *Service {
 
 	rootCmd.PersistentFlags().StringArrayVarP(&vars, "variables", "v", []string{}, "set variable list")
 
-	return &Service{Name: name, rootCmd: rootCmd, cronJobs: map[string]*cronJob{}, close: make(chan uint8)}
+	return &Service{Name: name, healthChecks: map[string]HealthCheck{}, rootCmd: rootCmd, cronJobs: map[string]*cronJob{}, close: make(chan uint8)}
 }
 
 func (s *Service) Command(command *cobra.Command) {
@@ -62,6 +65,10 @@ func (s *Service) Command(command *cobra.Command) {
 
 func (s *Service) CronJob(name string, handler func()) {
 	s.cronJobs[name] = &cronJob{name, handler}
+}
+
+func (s *Service) HealthCheck(name string, healthCheck HealthCheck) {
+	s.healthChecks[name] = healthCheck
 }
 
 func (s *Service) NewRouter(engine engines.Engine) *Router {
@@ -130,14 +137,13 @@ func (s *Service) cronjob(cmd *cobra.Command, args []string) {
 		<-forever
 	}
 	log.Fatal("Invalid job")
-
 }
 
 func (s *Service) gracefulShutdownConsumer() {
 	engine := &engines.HTTPSimple{Address: ":8081"}
 	engine.Connect()
-	consumer, _ := engine.Consumer("/graceful_shutdown")
-	handlers := []context.Handler{
+	gracefulShutdown, _ := engine.Consumer("/graceful_shutdown")
+	gfsHandlers := []context.Handler{
 		func(c *context.Context) {
 			c.Log().Info("Graceful shutdown")
 			s.close <- 0
@@ -145,9 +151,38 @@ func (s *Service) gracefulShutdownConsumer() {
 			c.String("done")
 		},
 	}
-	consumer.Consume(handlers)
-	s.consumers = append(s.consumers, consumer)
+	gracefulShutdown.Consume(gfsHandlers)
+	s.consumers = append(s.consumers, gracefulShutdown)
 	log.Info("Graceful shutdown configured")
+}
+
+func (s *Service) healthCheckConsumer() {
+	engine := &engines.HTTPSimple{Address: ":8081"}
+	engine.Connect()
+	healthCheck, _ := engine.Consumer("/health_check")
+	hckHandlers := []context.Handler{
+		func(c *context.Context) {
+			c.Log().Info("Health check")
+			pass := true
+			m := map[string]bool{}
+			for k, f := range s.healthChecks {
+				v := f()
+				if !v {
+					pass = false
+				}
+				m[k] = v
+			}
+			defer c.JSON(m)
+			if !pass {
+				c.Headers["status"] = 500
+				return
+			}
+			c.Headers["status"] = 201
+		},
+	}
+	healthCheck.Consume(hckHandlers)
+	s.consumers = append(s.consumers, healthCheck)
+	log.Info("Health check configured")
 }
 
 func (s *Service) listenAll() {
@@ -156,6 +191,7 @@ func (s *Service) listenAll() {
 
 func (s *Service) listen(cmd *cobra.Command, args []string) {
 	routingKey := args[0]
+	s.healthCheckConsumer()
 	s.listenRouters(routingKey)
 	log.Printf("Waiting for messages. To exit press CTRL+C")
 	s.notifyInterrupt()
@@ -183,16 +219,30 @@ func (s *Service) listenList(cmd *cobra.Command, args []string) {
 }
 
 func (s *Service) listenRouters(routingKey string) {
+	m := map[string]uint8{}
 	for _, router := range s.routers {
-		router.connect()
 		if handlers, ok := router.routes[routingKey]; ok {
-			log.Info("Starting handler")
-			consumer, err := router.engine.Consumer(routingKey)
-			if err != nil {
-				panic(err)
-			}
-			s.consumers = append(s.consumers, consumer)
-			go consumer.Consume(handlers)
+			v := m[routingKey]
+			name := fmt.Sprintf("%s %d", routingKey, v)
+			m[routingKey]++
+			routerCopy := *router
+			s.HealthCheck(name, HealthCheck(func() bool {
+				return routerCopy.engine.IsConnected()
+			}))
+			go func() {
+				if !routerCopy.engine.IsConnected() {
+					routerCopy.connect()
+				}
+				consumer, err := routerCopy.engine.Consumer(routingKey)
+				if err != nil {
+					panic(err)
+				}
+				s.consumers = append(s.consumers, consumer)
+				log.Info("Starting handler")
+				if err := consumer.Consume(handlers); err != nil {
+					log.Error("Unable to consume", err)
+				}
+			}()
 			continue
 		}
 		log.Error("Handler not found")

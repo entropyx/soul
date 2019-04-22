@@ -33,7 +33,10 @@ type Context struct {
 }
 
 func (a *AMQP) Close() error {
-	return a.conn.Close()
+	if a.conn != nil {
+		return a.conn.Close()
+	}
+	return nil
 }
 
 func (a *AMQP) Connect() error {
@@ -77,6 +80,13 @@ func (a *AMQP) Consumer(routingKey string) (Consumer, error) {
 		return nil, err
 	}
 	return &AMQPConsumer{consumer}, nil
+}
+
+func (a *AMQP) IsConnected() bool {
+	if a.conn == nil {
+		return false
+	}
+	return a.conn.IsConnected && !a.conn.IsBlocked
 }
 
 func (a *AMQP) MergeRoutingKeys(absolute, relative string) string {

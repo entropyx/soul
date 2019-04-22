@@ -1,6 +1,9 @@
 package soul
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
 	"sync"
 	"syscall"
 	"testing"
@@ -23,6 +26,62 @@ func (c *cronJobMock) Run() {
 	c.wg.Done()
 }
 
+func TestHealthChecks(t *testing.T) {
+	Convey("Given a service with two routers", t, func() {
+		service := New("test")
+		mockOne := &engines.Mock{}
+		mockTwo := &engines.Mock{}
+		routerOne := service.NewRouter(mockOne)
+		routerTwo := service.NewRouter(mockTwo)
+		routerOne.Listen("test", func(c *context.Context) {})
+		routerTwo.Listen("test", func(c *context.Context) {})
+		service.healthCheckConsumer()
+
+		Convey("When a router is closed", func() {
+			service.listenRouters("test")
+			time.Sleep(10 * time.Millisecond)
+			mockTwo.Close()
+
+			Convey("The connection status should be as expected", func() {
+				So(mockOne.IsConnected(), ShouldBeTrue)
+				So(mockTwo.IsConnected(), ShouldBeFalse)
+			})
+
+			Convey("The response should be as expected", func() {
+				resp, _ := http.Get("http://localhost:8081/health_check")
+				b, _ := ioutil.ReadAll(resp.Body)
+				m := map[string]bool{}
+				json.Unmarshal(b, &m)
+
+				So(resp.StatusCode, ShouldEqual, 500)
+				So(m["test 0"], ShouldBeTrue)
+				So(m["test 1"], ShouldBeFalse)
+			})
+		})
+
+		Convey("When the routers are connected", func() {
+			service.listenRouters("test")
+			time.Sleep(10 * time.Millisecond)
+
+			Convey("The connection status should be as expected", func() {
+				So(mockOne.IsConnected(), ShouldBeTrue)
+				So(mockTwo.IsConnected(), ShouldBeTrue)
+			})
+
+			Convey("The response should be as expected", func() {
+				resp, _ := http.Get("http://localhost:8081/health_check")
+				b, _ := ioutil.ReadAll(resp.Body)
+				m := map[string]bool{}
+				json.Unmarshal(b, &m)
+
+				So(resp.StatusCode, ShouldEqual, 201)
+				So(m["test 0"], ShouldBeTrue)
+				So(m["test 1"], ShouldBeTrue)
+			})
+		})
+	})
+}
+
 func TestListen(t *testing.T) {
 	Convey("Given a service with routes", t, func() {
 		mock := &engines.Mock{}
@@ -35,7 +94,7 @@ func TestListen(t *testing.T) {
 			service.listenRouters("logs.warning")
 			time.Sleep(10 * time.Millisecond)
 			Convey("The engine should be connected", func() {
-				So(mock.IsConnected, ShouldBeTrue)
+				So(mock.IsConnected(), ShouldBeTrue)
 			})
 
 			Convey("The listened routing key should be 'logs.warning'", func() {
@@ -54,7 +113,7 @@ func TestListen(t *testing.T) {
 			time.Sleep(1 * time.Millisecond)
 
 			Convey("The engine should be closed", func() {
-				So(mock.IsConnected, ShouldBeFalse)
+				So(mock.IsConnected(), ShouldBeFalse)
 			})
 
 			Convey("The consumers should be closed", func() {
