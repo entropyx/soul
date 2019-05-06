@@ -83,6 +83,7 @@ func (s *Service) Run() {
 	s.addCommandListener()
 	s.addCommandQuit()
 	s.addCommands()
+	s.healthCheckConsumer()
 	if err := s.rootCmd.Execute(); err != nil {
 		panic(err)
 	}
@@ -191,7 +192,6 @@ func (s *Service) listenAll() {
 
 func (s *Service) listen(cmd *cobra.Command, args []string) {
 	routingKey := args[0]
-	s.healthCheckConsumer()
 	s.listenRouters(routingKey)
 	log.Printf("Waiting for messages. To exit press CTRL+C")
 	s.notifyInterrupt()
