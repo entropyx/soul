@@ -74,7 +74,7 @@ func TestHealthChecks(t *testing.T) {
 				m := map[string]bool{}
 				json.Unmarshal(b, &m)
 
-				So(resp.StatusCode, ShouldEqual, 201)
+				So(resp.StatusCode, ShouldEqual, 200)
 				So(m["test 0"], ShouldBeTrue)
 				So(m["test 1"], ShouldBeTrue)
 			})
