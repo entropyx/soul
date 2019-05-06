@@ -177,7 +177,7 @@ func (s *Service) healthCheckConsumer() {
 				c.Headers["status"] = 500
 				return
 			}
-			c.Headers["status"] = 201
+			c.Headers["status"] = 200
 		},
 	}
 	healthCheck.Consume(hckHandlers)
