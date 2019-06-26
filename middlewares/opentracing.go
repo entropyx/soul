@@ -3,7 +3,6 @@ package middlewares
 import (
 	"os"
 
-	"github.com/entropyx/dd-trace-go/ddtrace/ext"
 	"github.com/entropyx/dd-trace-go/ddtrace/opentracer"
 	ddtracer "github.com/entropyx/dd-trace-go/ddtrace/tracer"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -53,8 +52,8 @@ func Opentracing() context.Handler {
 		c.SetLog(c.Log().WithFields(fields))
 		c.Set("span", span)
 		c.Next()
-		if err := c.Err; err != nil {
-			span.SetTag(ext.Error, err)
+		if err := c.Error; err != nil {
+			tracer.SetErrorTag(span, err)
 		}
 		// Inject the client span context into the headers
 	}

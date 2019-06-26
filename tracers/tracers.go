@@ -1,6 +1,8 @@
 package tracers
 
 import (
+	"bytes"
+
 	"github.com/entropyx/soul/context"
 	"github.com/sirupsen/logrus"
 )
@@ -9,6 +11,7 @@ var tracer Tracer
 
 type Tracer interface {
 	LogFields(context.M) logrus.Fields
+	SetErrorTag(span interface{}, err error)
 }
 
 func GlobalTracer() Tracer {
@@ -17,4 +20,12 @@ func GlobalTracer() Tracer {
 
 func SetGlobalTracer(t Tracer) {
 	tracer = t
+}
+
+func entryBuffer(entry *logrus.Entry) *bytes.Buffer {
+	if entry.Buffer != nil {
+		return entry.Buffer
+	} else {
+		return &bytes.Buffer{}
+	}
 }
