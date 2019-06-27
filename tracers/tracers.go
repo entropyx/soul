@@ -15,6 +15,9 @@ type Tracer interface {
 }
 
 func GlobalTracer() Tracer {
+	if tracer == nil {
+		return &noop{}
+	}
 	return tracer
 }
 
