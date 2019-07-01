@@ -2,17 +2,15 @@ package middlewares
 
 import (
 	"os"
-	"strings"
-
-	log "github.com/sirupsen/logrus"
 
 	"github.com/entropyx/dd-trace-go/ddtrace/ext"
 	"github.com/entropyx/dd-trace-go/ddtrace/opentracer"
-	"github.com/entropyx/dd-trace-go/ddtrace/tracer"
+	ddtracer "github.com/entropyx/dd-trace-go/ddtrace/tracer"
 	opentracing "github.com/opentracing/opentracing-go"
 
 	"github.com/entropyx/soul/context"
 	"github.com/entropyx/soul/env"
+	"github.com/entropyx/soul/tracers"
 )
 
 const (
@@ -21,17 +19,18 @@ const (
 )
 
 func ConfigureDatadog(service string) (opentracing.Tracer, error) {
-	cfg := &tracer.PropagatorConfig{
-		TraceHeader:  "trace_id",
-		ParentHeader: "parent_id",
+	cfg := &ddtracer.PropagatorConfig{
+		TraceHeader:  datadogTraceHeaderName,
+		ParentHeader: datadogParentHeaderName,
 	}
-	propagator := tracer.NewPropagator(cfg)
+	propagator := ddtracer.NewPropagator(cfg)
 	t := opentracer.New(
-		tracer.WithPropagator(propagator),
-		tracer.WithAgentAddr(os.Getenv("DD_AGENT_HOST")),
-		tracer.WithServiceName(service),
-		tracer.WithGlobalTag("env", env.Mode),
+		ddtracer.WithPropagator(propagator),
+		ddtracer.WithAgentAddr(os.Getenv("DD_AGENT_HOST")),
+		ddtracer.WithServiceName(service),
+		ddtracer.WithGlobalTag("env", env.Mode),
 	)
+	tracers.SetGlobalTracer(&tracers.Datadog{})
 	return t, nil
 }
 
@@ -42,24 +41,14 @@ func ConfigureOpenTracing(tracer opentracing.Tracer) {
 func Opentracing() context.Handler {
 	return func(c *context.Context) {
 		headers := context.M{}
-		fields := log.Fields{}
-		requestHeaders := c.Request.Headers
-
-		c.Log().Debugf("Tracing info from headers: span_id:%s trace_id:%s", requestHeaders[datadogParentHeaderName], requestHeaders[datadogTraceHeaderName])
-
 		t := opentracing.GlobalTracer()
+		tracer := tracers.GlobalTracer()
 		spanCtx, _ := t.Extract(opentracing.HTTPHeaders, c.Request.Headers)
 		span := t.StartSpan("new-request", opentracing.ChildOf(spanCtx))
 		defer span.Finish()
 		t.Inject(span.Context(), opentracing.HTTPHeaders, headers)
-		for k, v := range headers {
-			fk := strings.Replace(k, "-", "_", -1)
-			c.Headers[fk] = v
-			fields[fk] = v
-		}
-
-		c.Log().Debugf("Tracing info in response headers: span_id:%s trace_id:%s", c.Headers[datadogParentHeaderName], c.Headers[datadogTraceHeaderName])
-
+		fields := tracer.LogFields(headers)
+		c.Headers = headers
 		// span.SetTag(ext.SamplingPriority, ext.PriorityAutoKeep)
 		c.SetLog(c.Log().WithFields(fields))
 		c.Set("span", span)

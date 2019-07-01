@@ -30,7 +30,8 @@ func (r *RouteGroup) Include(handlers ...context.Handler) {
 }
 
 func (r *RouteGroup) Listen(routingKey string, handler context.Handler) {
-	handlers := r.handlers
+	handlers := make([]context.Handler, len(r.handlers))
+	copy(handlers, r.handlers)
 	handlers = append(handlers, handler)
 	r.router.routes[r.mergeRoutingKey(routingKey)] = handlers
 }

@@ -45,6 +45,17 @@ func TestInclude(t *testing.T) {
 			})
 		})
 
+		Convey("When three handlers are included", func() {
+			logs.Include(func(c *context.Context) {}, func(c *context.Context) {}, func(c *context.Context) {})
+
+			logs.Listen("info", func(c *context.Context) {})
+			logs.Listen("warning", func(c *context.Context) {})
+
+			Convey("The routes should not have the same handlers", func() {
+				So(logs.router.routes["logs.info"], ShouldNotResemble, logs.router.routes["logs.warning"])
+			})
+		})
+
 	})
 }
 
