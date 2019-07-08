@@ -1,6 +1,9 @@
 package tracers
 
 import (
+	"fmt"
+	"os"
+
 	propagation "github.com/entropyx/opencensus-propagation"
 	"github.com/entropyx/soul/context"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -19,8 +22,10 @@ type StackdriverFormatter struct {
 }
 
 func (*Stackdriver) LogFields(m context.M) logrus.Fields {
+	traceID := m[propagation.HeaderTraceID]
+	project := os.Getenv("GOOGLE_CLOUD_PROJECT")
 	fields := logrus.Fields{
-		stackdriverTraceID: m[propagation.HeaderTraceID],
+		stackdriverTraceID: fmt.Sprintf("project/%s/traces/%s", traceID, project),
 		stackdriverSpanID:  m[propagation.HeaderSpanID],
 	}
 	return fields
