@@ -142,7 +142,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Server) setHandler() {
 	f := func(w http.ResponseWriter, r *http.Request) {
 		u := r.URL
-		log.Info("New request ", u.Path)
+		log.Debug("New request ", u.Path)
 		mutex.Lock()
 		handlers, ok := s.patterns[u.Path]
 		mutex.Unlock()
