@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"os"
 	"time"
 
 	"errors"
@@ -25,6 +26,7 @@ type key uint
 
 const (
 	keyEntry key = iota
+	keyServiceName
 )
 
 type Handler func(*Context)
@@ -40,13 +42,14 @@ type Context struct {
 	C     C
 	Error error
 	// Log      *logrus.Entry
-	TraceID  string
-	SpanID   string
-	Request  *R
-	Headers  M
-	handlers []Handler
-	index    int8
-	m        mi
+	TraceID     string
+	SpanID      string
+	ServiceName string
+	Request     *R
+	Headers     M
+	handlers    []Handler
+	index       int8
+	m           mi
 }
 
 type R struct {
@@ -77,7 +80,7 @@ func MtoHeader(m M) http.Header {
 }
 
 func NewContext(c C) *Context {
-	context := &Context{C: c, Headers: M{}}
+	context := &Context{C: c, Headers: M{}, ServiceName: os.Getenv("SERVICE_NAME")}
 	context.SetLog(logrus.NewEntry(logrus.StandardLogger()))
 	context.setRequest()
 	return context
@@ -239,6 +242,18 @@ func LogFromContext(c context.Context) *logrus.Entry {
 	return logrus.NewEntry(logrus.StandardLogger())
 }
 
+func ServiceNameFromContext(c context.Context) string {
+	name, ok := c.Value(keyServiceName).(string)
+	if ok {
+		return name
+	}
+	return ""
+}
+
 func WithLog(c context.Context, entry *logrus.Entry) context.Context {
 	return context.WithValue(c, keyEntry, entry)
+}
+
+func WithServiceName(c context.Context, name string) context.Context {
+	return context.WithValue(c, keyServiceName, name)
 }
