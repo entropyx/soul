@@ -238,3 +238,7 @@ func LogFromContext(c context.Context) *logrus.Entry {
 	}
 	return logrus.NewEntry(logrus.StandardLogger())
 }
+
+func WithLog(c context.Context, entry *logrus.Entry) context.Context {
+	return context.WithValue(c, keyEntry, entry)
+}
