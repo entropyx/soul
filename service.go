@@ -163,7 +163,7 @@ func (s *Service) healthCheckConsumer() {
 	healthCheck, _ := engine.Consumer("/health_check")
 	hckHandlers := []context.Handler{
 		func(c *context.Context) {
-			c.Log().Info("Health check")
+			c.Log().Debug("Health check")
 			pass := true
 			m := map[string]bool{}
 			for k, f := range s.healthChecks {
