@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/entropyx/soul/conf"
 	"github.com/entropyx/soul/context"
 	"github.com/entropyx/soul/engines"
 	log "github.com/sirupsen/logrus"
@@ -31,7 +32,6 @@ const (
 type HealthCheck func() bool
 
 type Service struct {
-	Name         string
 	healthChecks map[string]HealthCheck
 	rootCmd      *cobra.Command
 	routers      []*Router
@@ -47,8 +47,9 @@ type flags struct {
 }
 
 func New(name string) *Service {
+	env.Name = name
 	rootCmd := &cobra.Command{
-		Use:   name,
+		Use:   env.Name,
 		Short: "",
 		Long:  "",
 		Run:   func(cmd *cobra.Command, args []string) {},
@@ -56,7 +57,7 @@ func New(name string) *Service {
 
 	rootCmd.PersistentFlags().StringArrayVarP(&vars, "variables", "v", []string{}, "set variable list")
 
-	return &Service{Name: name, healthChecks: map[string]HealthCheck{}, rootCmd: rootCmd, cronJobs: map[string]*cronJob{}, close: make(chan uint8)}
+	return &Service{healthChecks: map[string]HealthCheck{}, rootCmd: rootCmd, cronJobs: map[string]*cronJob{}, close: make(chan uint8)}
 }
 
 func (s *Service) Command(command *cobra.Command) {
@@ -197,7 +198,7 @@ func (s *Service) listen(cmd *cobra.Command, args []string) {
 	s.notifyInterrupt()
 	s.gracefulShutdownConsumer()
 	code := <-s.close
-	log.Infof("%s is shutting down", s.Name)
+	log.Infof("%s is shutting down", env.Name)
 	s.shutdown()
 	log.Println("Exit with code", code)
 }

@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"os"
 	"time"
 
 	"errors"
 
+	"github.com/entropyx/soul/env"
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
 )
@@ -80,7 +80,7 @@ func MtoHeader(m M) http.Header {
 }
 
 func NewContext(c C) *Context {
-	context := &Context{C: c, Headers: M{}, ServiceName: os.Getenv("SERVICE_NAME")}
+	context := &Context{C: c, Headers: M{}, ServiceName: env.Name}
 	context.SetLog(logrus.NewEntry(logrus.StandardLogger()))
 	context.setRequest()
 	return context
