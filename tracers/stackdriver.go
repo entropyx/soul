@@ -25,7 +25,7 @@ func (*Stackdriver) LogFields(m context.M) logrus.Fields {
 	traceID := m[propagation.HeaderTraceID]
 	project := os.Getenv("GOOGLE_CLOUD_PROJECT")
 	fields := logrus.Fields{
-		stackdriverTraceID: fmt.Sprintf("project/%s/traces/%s", project, traceID),
+		stackdriverTraceID: fmt.Sprintf("projects/%s/traces/%s", project, traceID),
 		stackdriverSpanID:  m[propagation.HeaderSpanID],
 	}
 	return fields
