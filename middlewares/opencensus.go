@@ -22,7 +22,7 @@ func OpenCensus() context.Handler {
 
 		spanCtx, _ := propagation.Extract(propagation.FormatTextMap, c.Request.Headers)
 
-		_, span := trace.StartSpanWithRemoteParent(c, fmt.Sprintf("%s new request", env.Name), spanCtx, trace.WithSpanKind(trace.SpanKindServer), trace.WithSampler(setSampler()))
+		_, span := trace.StartSpanWithRemoteParent(c, fmt.Sprintf("%s : %s", env.Name, c.Request.RoutingKey), spanCtx, trace.WithSpanKind(trace.SpanKindServer), trace.WithSampler(setSampler()))
 		defer span.End()
 
 		propagation.Inject(span.SpanContext(), propagation.FormatTextMap, c.Headers)
