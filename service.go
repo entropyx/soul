@@ -6,9 +6,9 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/entropyx/soul/conf"
 	"github.com/entropyx/soul/context"
 	"github.com/entropyx/soul/engines"
+	"github.com/entropyx/soul/env"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
