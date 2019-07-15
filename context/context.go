@@ -11,6 +11,7 @@ import (
 	"errors"
 
 	"github.com/entropyx/soul/env"
+	"github.com/entropyx/soul/log"
 	"github.com/golang/protobuf/proto"
 	"github.com/sirupsen/logrus"
 )
@@ -25,7 +26,7 @@ const (
 type key uint
 
 const (
-	keyEntry key = iota
+	keyLogger key = iota
 	keyServiceName
 )
 
@@ -41,7 +42,7 @@ type C interface {
 type Context struct {
 	C     C
 	Error error
-	// Log      *logrus.Entry
+	// Log      log.Logger
 	TraceID     string
 	SpanID      string
 	ServiceName string
@@ -81,7 +82,7 @@ func MtoHeader(m M) http.Header {
 
 func NewContext(c C) *Context {
 	context := &Context{C: c, Headers: M{}, ServiceName: env.Name}
-	context.SetLog(logrus.NewEntry(logrus.StandardLogger()))
+	context.SetLog(log.NewLogrus(logrus.StandardLogger()))
 	context.setRequest()
 	return context
 }
@@ -153,8 +154,8 @@ func (c *Context) JSON(v interface{}) {
 	c.publish(body, TypeJson)
 }
 
-func (c *Context) Log() *logrus.Entry {
-	return c.Get(keyEntry).(*logrus.Entry)
+func (c *Context) Log() log.Logger {
+	return c.Get(keyLogger).(log.Logger)
 }
 
 func (c *Context) Nack(args ...interface{}) {
@@ -196,8 +197,8 @@ func (c *Context) Set(key interface{}, value interface{}) {
 	c.m[key] = value
 }
 
-func (c *Context) SetLog(entry *logrus.Entry) {
-	c.Set(keyEntry, entry)
+func (c *Context) SetLog(entry log.Logger) {
+	c.Set(keyLogger, entry)
 }
 
 func (c *Context) String(text string) {
@@ -234,12 +235,12 @@ func (m M) Set(key, value string) {
 	m[key] = value
 }
 
-func LogFromContext(c context.Context) *logrus.Entry {
-	log, ok := c.Value(keyEntry).(*logrus.Entry)
+func LogFromContext(c context.Context) log.Logger {
+	l, ok := c.Value(keyLogger).(log.Logger)
 	if ok {
-		return log
+		return l
 	}
-	return logrus.NewEntry(logrus.StandardLogger())
+	return log.NewLogrus(logrus.StandardLogger())
 }
 
 func ServiceNameFromContext(c context.Context) string {
@@ -250,8 +251,8 @@ func ServiceNameFromContext(c context.Context) string {
 	return ""
 }
 
-func WithLog(c context.Context, entry *logrus.Entry) context.Context {
-	return context.WithValue(c, keyEntry, entry)
+func WithLog(c context.Context, log log.Logger) context.Context {
+	return context.WithValue(c, keyLogger, log)
 }
 
 func WithServiceName(c context.Context, name string) context.Context {
