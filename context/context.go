@@ -82,7 +82,7 @@ func MtoHeader(m M) http.Header {
 
 func NewContext(c C) *Context {
 	context := &Context{C: c, Headers: M{}, ServiceName: env.Name}
-	context.SetLog(log.NewLogrus(logrus.StandardLogger()))
+	context.SetLogger(log.NewLogrus(logrus.StandardLogger()))
 	context.setRequest()
 	return context
 }
@@ -197,7 +197,7 @@ func (c *Context) Set(key interface{}, value interface{}) {
 	c.m[key] = value
 }
 
-func (c *Context) SetLog(entry log.Logger) {
+func (c *Context) SetLogger(entry log.Logger) {
 	c.Set(keyLogger, entry)
 }
 
@@ -235,7 +235,7 @@ func (m M) Set(key, value string) {
 	m[key] = value
 }
 
-func LogFromContext(c context.Context) log.Logger {
+func LoggerFromContext(c context.Context) log.Logger {
 	l, ok := c.Value(keyLogger).(log.Logger)
 	if ok {
 		return l
@@ -251,7 +251,7 @@ func ServiceNameFromContext(c context.Context) string {
 	return ""
 }
 
-func WithLog(c context.Context, log log.Logger) context.Context {
+func WithLogger(c context.Context, log log.Logger) context.Context {
 	return context.WithValue(c, keyLogger, log)
 }
 
