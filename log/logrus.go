@@ -14,6 +14,10 @@ func NewLogrus(logger *logrus.Logger) *Logrus {
 	return &Logrus{entry}
 }
 
+func (l *Logrus) Fields() Fields {
+	return Fields(l.Data)
+}
+
 func (l *Logrus) WithFields(fields Fields) Logger {
 	return &Logrus{l.Entry.WithFields(logrus.Fields(fields))}
 }

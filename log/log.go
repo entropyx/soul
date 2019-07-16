@@ -19,4 +19,5 @@ type Logger interface {
 	Panic(args ...interface{})
 	Panicf(format string, args ...interface{})
 	WithFields(Fields) Logger
+	Fields() Fields
 }

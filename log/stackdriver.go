@@ -52,6 +52,10 @@ func (s *Stackdriver) Errorf(format string, args ...interface{}) {
 	s.Error(fmt.Sprintf(format, args...))
 }
 
+func (s *Stackdriver) Fields() Fields {
+	return s.fields
+}
+
 func (s *Stackdriver) Info(args ...interface{}) {
 	s.log(logging.Info, args...)
 }
