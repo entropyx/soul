@@ -6,6 +6,7 @@ import (
 
 	propagation "github.com/entropyx/opencensus-propagation"
 	"github.com/entropyx/soul/context"
+	"github.com/entropyx/soul/log"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"go.opencensus.io/trace"
@@ -21,14 +22,14 @@ type Stackdriver struct{}
 type StackdriverFormatter struct {
 }
 
-func (*Stackdriver) LogFields(m context.M) logrus.Fields {
+var _ Tracer = &Stackdriver{}
+
+func (*Stackdriver) LogFields(m context.M, logger log.Logger) log.Logger {
 	traceID := m[propagation.HeaderTraceID]
 	project := os.Getenv("GOOGLE_CLOUD_PROJECT")
-	fields := logrus.Fields{
-		stackdriverTraceID: fmt.Sprintf("projects/%s/traces/%s", project, traceID),
-		stackdriverSpanID:  m[propagation.HeaderSpanID],
-	}
-	return fields
+	newLogger := logger.WithField(stackdriverTraceID, fmt.Sprintf("projects/%s/traces/%s", project, traceID))
+	newLogger = newLogger.WithField(stackdriverSpanID, m[propagation.HeaderSpanID])
+	return newLogger
 }
 
 func (*Stackdriver) SetErrorTag(span interface{}, err error) {

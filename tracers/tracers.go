@@ -4,13 +4,14 @@ import (
 	"bytes"
 
 	"github.com/entropyx/soul/context"
+	"github.com/entropyx/soul/log"
 	"github.com/sirupsen/logrus"
 )
 
 var tracer Tracer
 
 type Tracer interface {
-	LogFields(context.M) logrus.Fields
+	LogFields(headers context.M, logger log.Logger) log.Logger
 	SetErrorTag(span interface{}, err error)
 }
 

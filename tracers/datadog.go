@@ -3,8 +3,8 @@ package tracers
 import (
 	"github.com/entropyx/dd-trace-go/ddtrace/ext"
 	"github.com/entropyx/soul/context"
+	"github.com/entropyx/soul/log"
 	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/sirupsen/logrus"
 	"go.opencensus.io/trace"
 )
 
@@ -15,12 +15,13 @@ const (
 
 type Datadog struct{}
 
-func (*Datadog) LogFields(m context.M) logrus.Fields {
-	fields := logrus.Fields{
-		datadogTraceHeaderName:  m[datadogTraceHeaderName],
-		datadogParentHeaderName: m[datadogParentHeaderName],
-	}
-	return fields
+var _ Tracer = &Datadog{}
+
+func (*Datadog) LogFields(m context.M, logger log.Logger) log.Logger {
+	newLogger := logger.WithField(datadogTraceHeaderName, m[datadogTraceHeaderName])
+	newLogger = newLogger.WithField(datadogParentHeaderName, m[datadogParentHeaderName])
+
+	return newLogger
 }
 
 func (*Datadog) SetErrorTag(span interface{}, err error) {
