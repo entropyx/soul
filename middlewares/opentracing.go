@@ -46,10 +46,9 @@ func Opentracing() context.Handler {
 		span := t.StartSpan("new-request", opentracing.ChildOf(spanCtx))
 		defer span.Finish()
 		t.Inject(span.Context(), opentracing.HTTPHeaders, headers)
-		fields := tracer.LogFields(headers)
 		c.Headers = headers
 		// span.SetTag(ext.SamplingPriority, ext.PriorityAutoKeep)
-		c.SetLog(c.Log().WithFields(fields))
+		c.SetLogger(tracer.LogFields(headers, c.Log()))
 		c.Set("span", span)
 		c.Next()
 		if err := c.Error; err != nil {

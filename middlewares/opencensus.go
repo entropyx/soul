@@ -26,9 +26,8 @@ func OpenCensus() context.Handler {
 		defer span.End()
 
 		propagation.Inject(span.SpanContext(), propagation.FormatTextMap, c.Headers)
-		fields := tracer.LogFields(c.Headers)
 
-		c.SetLog(c.Log().WithFields(fields))
+		c.SetLogger(tracer.LogFields(c.Headers, c.Log()))
 		c.Set("span", span)
 
 		c.Next()
