@@ -19,7 +19,6 @@ func (l *Logrus) Fields() Fields {
 }
 
 func (l *Logrus) WithField(key string, value interface{}) Logger {
-	newEntry := *l.Entry
-	newEntry.WithField(key, value)
-	return &Logrus{&newEntry}
+	newEntry := l.Entry.WithField(key, value)
+	return &Logrus{newEntry}
 }
