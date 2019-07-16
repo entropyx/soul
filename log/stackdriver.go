@@ -81,6 +81,12 @@ func (s *Stackdriver) Warningf(format string, args ...interface{}) {
 	s.Warning(fmt.Sprintf(format, args...))
 }
 
+func (s *Stackdriver) WithField(key string, value interface{}) Logger {
+	newLogger := *s
+	newLogger.fields[key] = value
+	return &newLogger
+}
+
 func (s *Stackdriver) log(severity logging.Severity, args ...interface{}) {
 	if !s.canLog(severity) {
 		return

@@ -18,6 +18,6 @@ type Logger interface {
 	Errorf(format string, args ...interface{})
 	Panic(args ...interface{})
 	Panicf(format string, args ...interface{})
-	WithFields(Fields) Logger
+	WithField(key string, value interface{}) Logger
 	Fields() Fields
 }

@@ -18,6 +18,6 @@ func (l *Logrus) Fields() Fields {
 	return Fields(l.Data)
 }
 
-func (l *Logrus) WithFields(fields Fields) Logger {
-	return &Logrus{l.Entry.WithFields(logrus.Fields(fields))}
+func (l *Logrus) WithField(key string, value interface{}) Logger {
+	return &Logrus{l.Entry.WithField(key, value)}
 }
