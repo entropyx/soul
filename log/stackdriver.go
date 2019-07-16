@@ -33,7 +33,7 @@ func StartStackdriver() {
 
 func NewStackdriver(opts *StackdriverOptions) *Stackdriver {
 	logger := stackdriverClient.Logger(opts.LogName)
-	return &Stackdriver{logger: logger, severity: opts.Severity}
+	return &Stackdriver{logger: logger, severity: opts.Severity, fields: Fields{}}
 }
 
 func (s *Stackdriver) Debug(args ...interface{}) {
