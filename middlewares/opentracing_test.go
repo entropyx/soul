@@ -32,7 +32,7 @@ func TestOpentracing(t *testing.T) {
 			})
 
 			Convey("The log data should contain a trace id", func() {
-				So(c.Log().Data[datadogTraceHeaderName], ShouldNotBeEmpty)
+				So(c.Log().Fields()[datadogTraceHeaderName], ShouldNotBeEmpty)
 			})
 		})
 
@@ -52,7 +52,7 @@ func TestOpentracing(t *testing.T) {
 			})
 
 			Convey("The log data should contain a trace id", func() {
-				So(c.Log().Data[datadogTraceHeaderName], ShouldNotBeEmpty)
+				So(c.Log().Fields()[datadogTraceHeaderName], ShouldNotBeEmpty)
 			})
 		})
 	})

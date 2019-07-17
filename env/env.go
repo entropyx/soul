@@ -11,6 +11,7 @@ const (
 )
 
 var Mode string
+var Name string
 
 func init() {
 	mode := os.Getenv("ENV")

@@ -1,8 +1,11 @@
 package tracers
 
 import (
+	"github.com/entropyx/dd-trace-go/ddtrace/ext"
 	"github.com/entropyx/soul/context"
-	"github.com/sirupsen/logrus"
+	"github.com/entropyx/soul/log"
+	opentracing "github.com/opentracing/opentracing-go"
+	"go.opencensus.io/trace"
 )
 
 const (
@@ -12,10 +15,20 @@ const (
 
 type Datadog struct{}
 
-func (*Datadog) LogFields(m context.M) logrus.Fields {
-	fields := logrus.Fields{
-		datadogTraceHeaderName:  m[datadogTraceHeaderName],
-		datadogParentHeaderName: m[datadogParentHeaderName],
+var _ Tracer = &Datadog{}
+
+func (*Datadog) LogFields(m context.M, logger log.Logger) log.Logger {
+	newLogger := logger.WithField(datadogTraceHeaderName, m[datadogTraceHeaderName])
+	newLogger = newLogger.WithField(datadogParentHeaderName, m[datadogParentHeaderName])
+
+	return newLogger
+}
+
+func (*Datadog) SetErrorTag(span interface{}, err error) {
+	switch s := span.(type) {
+	case opentracing.Span:
+		s.SetTag(ext.Error, err)
+	case trace.Span:
+		// TODO: implement OpenCensus
 	}
-	return fields
 }
