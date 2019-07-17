@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"cloud.google.com/go/logging"
+	"github.com/entropyx/soul/env"
 )
 
 var stackdriverClient *logging.Client
@@ -100,6 +101,7 @@ func (s *Stackdriver) log(severity logging.Severity, args ...interface{}) {
 	}
 	entry.Payload = fields
 	entry.Severity = severity
+	entry.Labels["env"] = env.Mode
 	s.logger.Log(entry)
 }
 
