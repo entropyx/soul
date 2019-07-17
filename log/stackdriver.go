@@ -101,7 +101,9 @@ func (s *Stackdriver) log(severity logging.Severity, args ...interface{}) {
 	}
 	entry.Payload = fields
 	entry.Severity = severity
-	entry.Labels["env"] = env.Mode
+	entry.Labels = map[string]string{
+		"env": env.Mode,
+	}
 	s.logger.Log(entry)
 }
 
