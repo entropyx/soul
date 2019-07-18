@@ -10,17 +10,27 @@ import (
 	"github.com/entropyx/soul/env"
 )
 
+type Severity uint8
+
+const (
+	Debug Severity = iota
+	Info
+	Warning
+	Error
+	Panic
+)
+
 var stackdriverClient *logging.Client
 
 type Stackdriver struct {
 	logger   *logging.Logger
 	fields   Fields
-	severity logging.Severity
+	severity Severity
 }
 
 type StackdriverOptions struct {
 	LogName  string
-	Severity logging.Severity
+	Severity Severity
 }
 
 func StartStackdriver() {
@@ -38,7 +48,7 @@ func NewStackdriver(opts *StackdriverOptions) *Stackdriver {
 }
 
 func (s *Stackdriver) Debug(args ...interface{}) {
-	s.log(logging.Debug, args...)
+	s.log(Debug, args...)
 }
 
 func (s *Stackdriver) Debugf(format string, args ...interface{}) {
@@ -46,7 +56,7 @@ func (s *Stackdriver) Debugf(format string, args ...interface{}) {
 }
 
 func (s *Stackdriver) Error(args ...interface{}) {
-	s.log(logging.Error, args...)
+	s.log(Error, args...)
 }
 
 func (s *Stackdriver) Errorf(format string, args ...interface{}) {
@@ -58,7 +68,7 @@ func (s *Stackdriver) Fields() Fields {
 }
 
 func (s *Stackdriver) Info(args ...interface{}) {
-	s.log(logging.Info, args...)
+	s.log(Info, args...)
 }
 
 func (s *Stackdriver) Infof(format string, args ...interface{}) {
@@ -66,7 +76,7 @@ func (s *Stackdriver) Infof(format string, args ...interface{}) {
 }
 
 func (s *Stackdriver) Panic(args ...interface{}) {
-	s.log(logging.Critical, args...)
+	s.log(Panic, args...)
 	os.Exit(1)
 }
 
@@ -75,7 +85,7 @@ func (s *Stackdriver) Panicf(format string, args ...interface{}) {
 }
 
 func (s *Stackdriver) Warning(args ...interface{}) {
-	s.log(logging.Warning, args...)
+	s.log(Warning, args...)
 }
 
 func (s *Stackdriver) Warningf(format string, args ...interface{}) {
@@ -88,7 +98,7 @@ func (s *Stackdriver) WithField(key string, value interface{}) Logger {
 	return &newLogger
 }
 
-func (s *Stackdriver) log(severity logging.Severity, args ...interface{}) {
+func (s *Stackdriver) log(severity Severity, args ...interface{}) {
 	if !s.canLog(severity) {
 		return
 	}
@@ -100,13 +110,28 @@ func (s *Stackdriver) log(severity logging.Severity, args ...interface{}) {
 		delete(fields, "trace")
 	}
 	entry.Payload = fields
-	entry.Severity = severity
+	entry.Severity = setSeverity(severity)
 	entry.Labels = map[string]string{
 		"env": env.Mode,
 	}
 	s.logger.Log(entry)
 }
 
-func (s *Stackdriver) canLog(severity logging.Severity) bool {
-	return s.severity >= severity
+func (s *Stackdriver) canLog(severity Severity) bool {
+	return severity >= s.severity
+}
+
+func setSeverity(severity Severity) logging.Severity {
+	switch severity {
+	case Debug:
+		return logging.Debug
+	case Info:
+		return logging.Info
+	case Warning:
+		return logging.Warning
+	case Panic:
+		return logging.Critical
+	default:
+		return logging.Default
+	}
 }
