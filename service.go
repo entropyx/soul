@@ -239,7 +239,7 @@ func (s *Service) listenRouters(routingKey string) {
 					panic(err)
 				}
 				s.consumers = append(s.consumers, consumer)
-				log.Info("Starting handler")
+				log.Infof("Starting handler in %s mode", env.Mode)
 				if err := consumer.Consume(handlers); err != nil {
 					log.Error("Unable to consume", err)
 				}
