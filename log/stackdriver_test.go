@@ -6,7 +6,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func Test(t *testing.T) {
+func Test_canLog(t *testing.T) {
 	Convey("Given the severity info", t, func() {
 		s := &Stackdriver{severity: Info}
 		Convey("When canLog is called with a debug severity", func() {
