@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"cloud.google.com/go/logging"
-	"github.com/entropyx/soul/env"
 )
 
 type Severity uint8
@@ -111,9 +110,6 @@ func (s *Stackdriver) log(severity Severity, args ...interface{}) {
 	}
 	entry.Payload = fields
 	entry.Severity = setSeverity(severity)
-	entry.Labels = map[string]string{
-		"env": env.Mode,
-	}
 	s.logger.Log(entry)
 }
 
