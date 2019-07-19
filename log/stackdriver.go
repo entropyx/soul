@@ -114,6 +114,7 @@ func (s *Stackdriver) log(severity Severity, args ...interface{}) {
 	entry.Labels = map[string]string{
 		"env":     env.Mode,
 		"service": env.Name,
+		"source":  "soul",
 	}
 	s.logger.Log(entry)
 }
