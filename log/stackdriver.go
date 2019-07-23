@@ -107,7 +107,6 @@ func (s *Stackdriver) log(severity Severity, args ...interface{}) {
 	entry := logging.Entry{}
 	if trace, ok := fields["trace"]; ok {
 		entry.Trace = trace.(string)
-		delete(fields, "trace")
 	}
 	entry.Payload = fields
 	entry.Severity = setSeverity(severity)
