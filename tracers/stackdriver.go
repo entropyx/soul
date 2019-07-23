@@ -28,6 +28,7 @@ func (*Stackdriver) LogFields(m context.M, logger log.Logger) log.Logger {
 	traceID := m[propagation.HeaderTraceID]
 	project := os.Getenv("GOOGLE_CLOUD_PROJECT")
 	newLogger := logger.WithField(stackdriverTraceID, fmt.Sprintf("projects/%s/traces/%s", project, traceID))
+	newLogger = newLogger.WithField("trace_id", m[propagation.HeaderSpanID])
 	newLogger = newLogger.WithField(stackdriverSpanID, m[propagation.HeaderSpanID])
 	return newLogger
 }
