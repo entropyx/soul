@@ -21,16 +21,12 @@ func OpenCensus() context.Handler {
 		tracer := tracers.GlobalTracer()
 
 		spanCtx, _ := propagation.Extract(propagation.FormatTextMap, c.Request.Headers)
-		c.Log().Info("name", env.Name)
-		c.Log().Info("mode", env.Mode)
 		_, span := trace.StartSpanWithRemoteParent(c, fmt.Sprintf("%s : %s", env.Name, c.Request.RoutingKey), spanCtx, trace.WithSpanKind(trace.SpanKindServer), trace.WithSampler(setSampler()))
 		defer span.End()
-		c.Log().Info("trace", span.SpanContext().TraceID)
 		propagation.Inject(span.SpanContext(), propagation.FormatTextMap, c.Headers)
 
 		c.SetLogger(tracer.LogFields(c.Headers, c.Log()))
 		c.Set("span", span)
-		c.Log().Info("fields", c.Log().Fields())
 		c.Next()
 
 		if err := c.Error; err != nil {
