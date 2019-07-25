@@ -13,7 +13,7 @@ func Logger(logger log.Logger) context.Handler {
 		t := time.Now()
 		c.Log().Info("Incoming request")
 		c.Next()
-		withDuration := c.Log().WithField("duration", time.Since(t).String())
+		withDuration := c.Log().WithField("duration", time.Since(t))
 		if c.Error != nil {
 			withDuration.WithField("error.message", c.Error.Error()).Error("Request aborted with error")
 			return
