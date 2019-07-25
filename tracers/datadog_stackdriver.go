@@ -3,6 +3,7 @@ package tracers
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 
 	propagation "github.com/entropyx/opencensus-propagation"
 	"github.com/entropyx/soul/context"
@@ -22,8 +23,8 @@ func (*DatadogSd) LogFields(m context.M, logger log.Logger) log.Logger {
 	decodeAndCopyString(m[propagation.HeaderSpanID].(string), spanID[:])
 	uTraceID := binary.BigEndian.Uint64(traceID[8:])
 	uSpanID := binary.BigEndian.Uint64(spanID[:])
-	newLogger := logger.WithField("trace_id", uTraceID)
-	newLogger = newLogger.WithField("span_id", uSpanID)
+	newLogger := logger.WithField("trace_id", fmt.Sprintf("%d", uTraceID))
+	newLogger = newLogger.WithField("span_id", fmt.Sprintf("%d", uSpanID))
 	return newLogger
 }
 
