@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/entropyx/errors"
 	propagation "github.com/entropyx/opencensus-propagation"
 	"github.com/entropyx/soul/context"
 	"github.com/entropyx/soul/log"
@@ -34,12 +33,7 @@ func (*DatadogSd) SetErrorTag(span interface{}, err error) {
 	case opentracing.Span:
 		// TODO: OpenTracing
 	case trace.Span:
-		e, ok := err.(errors.Error)
-		if !ok {
-			s.AddAttributes(trace.StringAttribute("error.msg", "undefined"))
-			return
-		}
-		s.AddAttributes(trace.StringAttribute("error.msg", e.Message))
+		s.AddAttributes(trace.StringAttribute("error.msg", err.Error()))
 		s.SetStatus(trace.Status{
 			Code:    trace.StatusCodeUnknown, // TODO: code strategy
 			Message: err.Error(),

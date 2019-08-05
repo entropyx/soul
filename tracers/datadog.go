@@ -2,7 +2,6 @@ package tracers
 
 import (
 	"github.com/entropyx/dd-trace-go/ddtrace/ext"
-	"github.com/entropyx/errors"
 	"github.com/entropyx/soul/context"
 	"github.com/entropyx/soul/log"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -30,11 +29,6 @@ func (*Datadog) SetErrorTag(span interface{}, err error) {
 	case opentracing.Span:
 		s.SetTag(ext.Error, err)
 	case trace.Span:
-		e, ok := err.(errors.Error)
-		if !ok {
-			s.AddAttributes(trace.StringAttribute("error.msg", "undefined"))
-			return
-		}
-		s.AddAttributes(trace.StringAttribute("error.msg", e.Message))
+		s.AddAttributes(trace.StringAttribute("error.msg", err.Error()))
 	}
 }
