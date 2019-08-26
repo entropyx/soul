@@ -3,9 +3,9 @@ package middlewares
 import (
 	"os"
 
-	"github.com/entropyx/dd-trace-go/ddtrace/opentracer"
-	ddtracer "github.com/entropyx/dd-trace-go/ddtrace/tracer"
 	opentracing "github.com/opentracing/opentracing-go"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/opentracer"
+	ddtracer "gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
 	"github.com/entropyx/soul/context"
 	"github.com/entropyx/soul/env"

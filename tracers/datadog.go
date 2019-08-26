@@ -1,11 +1,11 @@
 package tracers
 
 import (
-	"github.com/entropyx/dd-trace-go/ddtrace/ext"
 	"github.com/entropyx/soul/context"
 	"github.com/entropyx/soul/log"
 	opentracing "github.com/opentracing/opentracing-go"
 	"go.opencensus.io/trace"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
 )
 
 const (
